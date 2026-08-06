@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NotchView: View {
     @ObservedObject var state: NotchState
+    @ObservedObject var monitor: ClaudeCodeMonitor
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -16,8 +17,15 @@ struct NotchView: View {
             .frame(width: size.width, height: size.height)
             .overlay(alignment: .top) {
                 if state.isOpen {
-                    expandedContent
+                    openContent
                         .frame(width: size.width, height: size.height)
+                        .transition(.opacity)
+                } else if let activity = monitor.overall {
+                    // Repliée, l'encoche se contente d'une pastille : c'est tout
+                    // l'intérêt d'un état ambiant, savoir sans avoir à regarder.
+                    ActivityDot(activity: activity, size: 6)
+                        .frame(width: size.width, height: size.height, alignment: .trailing)
+                        .padding(.trailing, 10)
                         .transition(.opacity)
                 }
             }
@@ -28,7 +36,68 @@ struct NotchView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .ignoresSafeArea()
         .animation(animation, value: state.phase)
+        .animation(.easeInOut(duration: 0.25), value: monitor.overall)
     }
+
+    // MARK: - Contenu déployé
+
+    private var openContent: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+            switch state.panel {
+            case .home: homePanel
+            case .claude: ClaudePanelView(monitor: monitor)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 22)
+        // Sans cette extension, la barre d'icônes se calerait sur la largeur
+        // naturelle du contenu au lieu du bord de l'encoche.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .topTrailing) { toolbar }
+    }
+
+    private var homePanel: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "tray.full")
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(.white.opacity(0.85))
+            Text("LedgeNotch")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+            Text("L'étagère à fichiers arrive ici.")
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.45))
+        }
+    }
+
+    private var toolbar: some View {
+        HStack(spacing: 2) {
+            NotchIconButton(
+                isSelected: state.panel == .claude,
+                badge: monitor.overall?.color,
+                help: "Sessions Claude Code"
+            ) {
+                state.panel = state.panel == .claude ? .home : .claude
+            } icon: {
+                ClaudeBurstMark(size: 14)
+            }
+
+            NotchIconButton(
+                isSelected: false,
+                badge: nil,
+                help: "Réglages de LedgeNotch",
+                action: onOpenSettings
+            ) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 13, weight: .medium))
+            }
+        }
+        .padding(.top, 5)
+        .padding(.trailing, 10)
+    }
+
+    // MARK: - Style
 
     private var topRadius: CGFloat {
         switch state.phase {
@@ -60,60 +129,43 @@ struct NotchView: View {
             ? .spring(response: 0.34, dampingFraction: 0.72)
             : .spring(response: 0.22, dampingFraction: 0.85)
     }
-
-    private var expandedContent: some View {
-        VStack(spacing: 10) {
-            Spacer(minLength: 0)
-
-            Image(systemName: "tray.full")
-                .font(.system(size: 30, weight: .light))
-                .foregroundStyle(.white.opacity(0.85))
-
-            Text("LedgeNotch")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-
-            Text("Le socle fonctionne.")
-                .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.5))
-
-            Spacer(minLength: 0)
-        }
-        .padding(.top, 8)
-        // Sans cette extension, l'engrenage se calerait sur la largeur naturelle
-        // du VStack — une centaine de points — au lieu du bord de l'encoche.
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topTrailing) {
-            SettingsButton(action: onOpenSettings)
-                .padding(.top, 7)
-                .padding(.trailing, 12)
-        }
-    }
 }
 
-/// L'engrenage, en haut à droite de l'encoche ouverte.
-///
-/// Discret au repos pour ne pas attirer l'œil avant qu'on le cherche, franc au
-/// survol pour confirmer qu'il est bien cliquable.
-private struct SettingsButton: View {
+/// Bouton d'icône de l'encoche : discret au repos, franc au survol.
+private struct NotchIconButton<Icon: View>: View {
+    let isSelected: Bool
+    let badge: Color?
+    let help: String
     let action: () -> Void
+    @ViewBuilder let icon: () -> Icon
+
     @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "gearshape.fill")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white.opacity(isHovering ? 0.95 : 0.45))
+            icon()
+                .foregroundStyle(.white.opacity(opacity))
                 .frame(width: 26, height: 26)
                 .background(
-                    Circle()
-                        .fill(.white.opacity(isHovering ? 0.14 : 0))
+                    Circle().fill(.white.opacity(isSelected ? 0.16 : (isHovering ? 0.12 : 0)))
                 )
-                .rotationEffect(.degrees(isHovering ? 45 : 0))
+                .overlay(alignment: .topTrailing) {
+                    if let badge {
+                        Circle()
+                            .fill(badge)
+                            .frame(width: 5, height: 5)
+                            .offset(x: -2, y: 3)
+                    }
+                }
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
         .animation(.easeOut(duration: 0.18), value: isHovering)
-        .help("Réglages de LedgeNotch")
+        .help(help)
+    }
+
+    private var opacity: Double {
+        if isSelected { return 0.95 }
+        return isHovering ? 0.95 : 0.45
     }
 }

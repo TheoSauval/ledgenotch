@@ -11,6 +11,15 @@ enum DebugOptions {
         ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_OPEN"] == "1"
     }
 
+    /// `LEDGENOTCH_FORCE_PANEL=claude` choisit l'onglet affiché au lancement.
+    static var forcedPanel: NotchState.Panel? {
+        switch ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_PANEL"] {
+        case "claude": return .claude
+        case "home": return .home
+        default: return nil
+        }
+    }
+
     /// `LEDGENOTCH_OPEN_SETTINGS=1` ouvre la fenêtre de réglages au lancement,
     /// pour itérer dessus sans repasser par l'engrenage à chaque fois.
     static var openSettings: Bool {

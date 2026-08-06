@@ -4,6 +4,8 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var preferences = Preferences.shared
     @State private var geometry: NotchGeometry?
+    @State private var hooksInstalled = ClaudeHooksInstaller.isInstalled
+    @State private var hooksError: String?
 
     var body: some View {
         Form {
@@ -38,6 +40,34 @@ struct SettingsView: View {
             Section("Retour haptique") {
                 Toggle("Vibrer le trackpad", isOn: $preferences.hapticsEnabled)
                 Text("Demande un trackpad Force Touch, et un doigt posé dessus au moment précis du retour — sinon on ne sent rien. Le réglage système « Retour du Force Touch » doit aussi être actif.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Claude Code") {
+                HStack {
+                    Image(systemName: hooksInstalled
+                          ? "checkmark.circle.fill" : "exclamationmark.circle")
+                        .foregroundStyle(hooksInstalled ? .green : .orange)
+                    Text(hooksInstalled ? "Hooks installés" : "Hooks non installés")
+                    Spacer()
+                    Button(hooksInstalled ? "Retirer" : "Installer") {
+                        toggleHooks()
+                    }
+                }
+
+                Text("LedgeNotch ajoute cinq hooks à ~/.claude/settings.json pour connaître l'état de tes sessions. Une copie du fichier est conservée à côté avant toute modification.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let hooksError {
+                    Text(hooksError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
+                Toggle("Signaler dans l'encoche", isOn: $preferences.alertOnClaudeEvents)
+                Text("L'encoche dépasse brièvement quand une session se bloque sur une question ou vient de terminer.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -86,6 +116,20 @@ struct SettingsView: View {
         ) { _ in
             refreshGeometry()
         }
+    }
+
+    private func toggleHooks() {
+        hooksError = nil
+        do {
+            if hooksInstalled {
+                try ClaudeHooksInstaller.uninstall()
+            } else {
+                try ClaudeHooksInstaller.install()
+            }
+        } catch {
+            hooksError = error.localizedDescription
+        }
+        hooksInstalled = ClaudeHooksInstaller.isInstalled
     }
 
     private func refreshGeometry() {

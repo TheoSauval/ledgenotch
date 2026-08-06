@@ -13,6 +13,7 @@ final class NotchController {
     private let state = NotchState()
     private let tracker = MouseTracker()
     private let preferences = Preferences.shared
+    private let claude = ClaudeCodeMonitor()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -29,6 +30,8 @@ final class NotchController {
     func start() {
         rebuild()
         observePreferences()
+        claude.start()
+        observeClaude()
 
         NotificationCenter.default.addObserver(
             self,
@@ -36,6 +39,10 @@ final class NotchController {
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+
+        if let panel = DebugOptions.forcedPanel {
+            state.panel = panel
+        }
 
         if DebugOptions.forceOpen {
             state.phase = .open
@@ -54,6 +61,7 @@ final class NotchController {
 
     func stop() {
         tracker.stop()
+        claude.stop()
         pendingClose?.cancel()
         cancellables.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -83,7 +91,7 @@ final class NotchController {
 
     private func makePanel() -> NotchPanel {
         let panel = NotchPanel(contentRect: .zero)
-        let view = NotchView(state: state) { [weak self] in
+        let view = NotchView(state: state, monitor: claude) { [weak self] in
             self?.openSettings()
         }
         let hosting = NotchHostingView(rootView: view)
@@ -107,6 +115,27 @@ final class NotchController {
                 }
             }
             .store(in: &cancellables)
+    }
+
+    /// Une session qui se bloque ou qui termine fait brièvement dépasser
+    /// l'encoche. C'est tout l'intérêt de l'intégration : ne plus avoir à
+    /// retourner voir dans le terminal si Claude a fini.
+    private func observeClaude() {
+        claude.attention
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated { self?.flashForAttention() }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func flashForAttention() {
+        guard preferences.alertOnClaudeEvents else { return }
+        // Encoche déjà sortie : inutile d'insister, et la refermer derrière
+        // couperait l'utilisateur en pleine lecture.
+        guard state.phase == .closed else { return }
+        setPhase(.peek)
+        Haptics.peek()
+        scheduleClose(after: 2.2)
     }
 
     private func panelFrame(for geometry: NotchGeometry) -> NSRect {
@@ -192,7 +221,7 @@ final class NotchController {
         updateMousePassthrough(at: point)
     }
 
-    private func scheduleClose() {
+    private func scheduleClose(after delay: TimeInterval? = nil) {
         guard pendingClose == nil else { return }
         let wasOpen = state.isOpen
         let work = DispatchWorkItem { [weak self] in
@@ -205,7 +234,7 @@ final class NotchController {
             }
         }
         pendingClose = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + closeDelay, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + (delay ?? closeDelay), execute: work)
     }
 
     private func close() {

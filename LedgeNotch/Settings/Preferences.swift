@@ -14,6 +14,7 @@ final class Preferences: ObservableObject {
         static let openOnHover = "openOnHover"
         static let hapticsEnabled = "hapticsEnabled"
         static let peekAmount = "peekAmount"
+        static let alertOnClaudeEvents = "alertOnClaudeEvents"
     }
 
     /// Ouvrir l'encoche au simple survol, sans attendre le clic.
@@ -30,6 +31,11 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(peekAmount, forKey: Key.peekAmount) }
     }
 
+    /// Faire dépasser l'encoche quand une session Claude Code réclame l'attention.
+    @Published var alertOnClaudeEvents: Bool {
+        didSet { defaults.set(alertOnClaudeEvents, forKey: Key.alertOnClaudeEvents) }
+    }
+
     static let peekRange: ClosedRange<Double> = 0...80
 
     private let defaults: UserDefaults
@@ -40,15 +46,18 @@ final class Preferences: ObservableObject {
             Key.openOnHover: false,
             Key.hapticsEnabled: true,
             Key.peekAmount: 30.0,
+            Key.alertOnClaudeEvents: true,
         ])
         openOnHover = defaults.bool(forKey: Key.openOnHover)
         hapticsEnabled = defaults.bool(forKey: Key.hapticsEnabled)
         peekAmount = defaults.double(forKey: Key.peekAmount)
+        alertOnClaudeEvents = defaults.bool(forKey: Key.alertOnClaudeEvents)
     }
 
     func resetToDefaults() {
         openOnHover = false
         hapticsEnabled = true
         peekAmount = 30
+        alertOnClaudeEvents = true
     }
 }

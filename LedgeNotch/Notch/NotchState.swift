@@ -12,7 +12,14 @@ final class NotchState: ObservableObject {
         case open
     }
 
+    /// Ce que montre l'encoche une fois ouverte.
+    enum Panel {
+        case home
+        case claude
+    }
+
     @Published var phase: Phase = .closed
+    @Published var panel: Panel = .home
     @Published var metrics = NotchMetrics(closedSize: NotchGeometry.simulatedSize)
 
     var currentSize: CGSize {

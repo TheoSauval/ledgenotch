@@ -34,6 +34,10 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Settings/Preferences.swift` | Les réglages, conservés dans `UserDefaults`. |
 | `Settings/SettingsWindow.swift` | Ouverture de la fenêtre de réglages. |
 | `Settings/SettingsView.swift` | La page de réglages. |
+| `ClaudeCode/ClaudeEventLog.swift` | Surveille `~/.ledgenotch/events.jsonl`. |
+| `ClaudeCode/ClaudeCodeMonitor.swift` | Tient l'état des sessions à jour. |
+| `ClaudeCode/ClaudeHooksInstaller.swift` | Écrit les hooks dans `~/.claude/settings.json`. |
+| `ClaudeCode/ClaudePanelView.swift` | La liste des sessions dans l'encoche. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -66,13 +70,42 @@ Edit Scheme → Run → Arguments :
 | Variable | Effet |
 | --- | --- |
 | `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
+| `LEDGENOTCH_FORCE_PANEL=claude` | Choisit l'onglet affiché au lancement. |
 | `LEDGENOTCH_OPEN_SETTINGS=1` | Ouvre la fenêtre de réglages au lancement. |
 | `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
+
+## Claude Code
+
+Les hooks de Claude Code écrivent leur charge utile JSON dans
+`~/.ledgenotch/events.jsonl`, que LedgeNotch surveille :
+
+```bash
+mkdir -p ~/.ledgenotch && { cat; echo; } >> ~/.ledgenotch/events.jsonl
+```
+
+Un fichier plutôt qu'un port réseau : aucune alerte du pare-feu, aucun binaire
+intermédiaire, les événements s'accumulent même quand LedgeNotch est arrêté, et
+on peut le lire à la main quand quelque chose cloche.
+
+Cinq événements suffisent à reconstituer l'état d'une session :
+
+| Événement | Interprétation |
+| --- | --- |
+| `SessionStart` | La session existe, au repos. |
+| `UserPromptSubmit` | Un tour démarre. |
+| `Notification` | Bloquée — seulement pour `permission_prompt` et `idle_prompt`. |
+| `Stop` | Le tour est terminé. |
+| `SessionEnd` | La session disparaît. |
+
+L'installation se fait depuis les réglages, qui fusionnent les entrées dans
+`~/.claude/settings.json` sans toucher au reste et en gardant une copie du
+fichier d'origine à côté.
 
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
 - [x] Réglages : ouverture au survol, dépassement, retour haptique
+- [x] Claude Code : état des sessions, pastille ambiante, alerte
 - [ ] Étagère à fichiers (glisser-déposer)
 - [ ] Lecteur média — dépend de [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter),
       Apple ayant verrouillé `MediaRemote` depuis macOS 15.4
