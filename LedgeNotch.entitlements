@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Nécessaire pour piloter Apple Music et Spotify par AppleScript. Sans
+	     cette autorisation, le runtime durci bloque tout événement Apple sortant
+	     dès qu'on signe pour de bon — la construction en ad-hoc, elle, désactive
+	     le runtime durci et masque le problème jusqu'au jour de la distribution. -->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
+</plist>

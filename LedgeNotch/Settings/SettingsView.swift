@@ -6,6 +6,7 @@ struct SettingsView: View {
     @State private var geometry: NotchGeometry?
     @State private var hooksInstalled = ClaudeHooksInstaller.isInstalled
     @State private var hooksError: String?
+    @State private var players: [MusicApp] = MusicApp.running
 
     var body: some View {
         Form {
@@ -40,6 +41,21 @@ struct SettingsView: View {
             Section("Retour haptique") {
                 Toggle("Vibrer le trackpad", isOn: $preferences.hapticsEnabled)
                 Text("Demande un trackpad Force Touch, et un doigt posé dessus au moment précis du retour — sinon on ne sent rien. Le réglage système « Retour du Force Touch » doit aussi être actif.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Musique") {
+                if players.isEmpty {
+                    Text("Aucun lecteur ouvert.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(players) { player in
+                        LabeledContent(player.displayName, value: "ouvert")
+                    }
+                }
+
+                Text("LedgeNotch pilote Apple Music et Spotify par AppleScript. Les autres sources — navigateur, podcasts, lecteurs tiers — resteront invisibles tant qu'Apple gardera `MediaRemote` verrouillé. L'autorisation se règle dans Réglages Système → Confidentialité et sécurité → Automatisation.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -108,7 +124,10 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
-        .onAppear(perform: refreshGeometry)
+        .onAppear {
+            refreshGeometry()
+            players = MusicApp.running
+        }
         .onReceive(
             NotificationCenter.default.publisher(
                 for: NSApplication.didChangeScreenParametersNotification

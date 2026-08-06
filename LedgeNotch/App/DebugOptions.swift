@@ -15,6 +15,7 @@ enum DebugOptions {
     static var forcedPanel: NotchState.Panel? {
         switch ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_PANEL"] {
         case "claude": return .claude
+        case "music": return .music
         case "home": return .home
         default: return nil
         }

@@ -14,6 +14,7 @@ final class NotchController {
     private let tracker = MouseTracker()
     private let preferences = Preferences.shared
     private let claude = ClaudeCodeMonitor()
+    private let music = MusicController()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -32,6 +33,7 @@ final class NotchController {
         observePreferences()
         claude.start()
         observeClaude()
+        music.start()
 
         NotificationCenter.default.addObserver(
             self,
@@ -62,6 +64,7 @@ final class NotchController {
     func stop() {
         tracker.stop()
         claude.stop()
+        music.stop()
         pendingClose?.cancel()
         cancellables.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -91,7 +94,7 @@ final class NotchController {
 
     private func makePanel() -> NotchPanel {
         let panel = NotchPanel(contentRect: .zero)
-        let view = NotchView(state: state, monitor: claude) { [weak self] in
+        let view = NotchView(state: state, monitor: claude, music: music) { [weak self] in
             self?.openSettings()
         }
         let hosting = NotchHostingView(rootView: view)

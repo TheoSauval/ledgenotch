@@ -15,6 +15,7 @@ final class NotchState: ObservableObject {
     /// Ce que montre l'encoche une fois ouverte.
     enum Panel {
         case home
+        case music
         case claude
     }
 

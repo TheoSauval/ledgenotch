@@ -38,6 +38,11 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `ClaudeCode/ClaudeCodeMonitor.swift` | Tient l'état des sessions à jour. |
 | `ClaudeCode/ClaudeHooksInstaller.swift` | Écrit les hooks dans `~/.claude/settings.json`. |
 | `ClaudeCode/ClaudePanelView.swift` | La liste des sessions dans l'encoche. |
+| `Music/MusicApp.swift` | Apple Music et Spotify, et le test « déjà lancé ». |
+| `Music/MusicScripts.swift` | Les scripts AppleScript. |
+| `Music/AppleScriptRunner.swift` | Exécution hors du fil principal. |
+| `Music/MusicController.swift` | Sondage, pochettes et commandes. |
+| `Music/MusicPanelView.swift` | Le lecteur dans l'encoche. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -70,7 +75,7 @@ Edit Scheme → Run → Arguments :
 | Variable | Effet |
 | --- | --- |
 | `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
-| `LEDGENOTCH_FORCE_PANEL=claude` | Choisit l'onglet affiché au lancement. |
+| `LEDGENOTCH_FORCE_PANEL=claude` | Choisit l'onglet affiché au lancement : `home`, `music` ou `claude`. |
 | `LEDGENOTCH_OPEN_SETTINGS=1` | Ouvre la fenêtre de réglages au lancement. |
 | `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
 
@@ -110,14 +115,38 @@ L'installation se fait depuis les réglages, qui fusionnent les entrées dans
 `~/.claude/settings.json` sans toucher au reste et en gardant une copie du
 fichier d'origine à côté.
 
+## Musique
+
+Apple Music et Spotify sont pilotés par **AppleScript**, pas par `MediaRemote` :
+Apple a verrouillé ce framework privé depuis macOS 15.4 et les contournements
+cassent à chaque mise à jour du système. On perd l'audio du navigateur et des
+lecteurs tiers, on gagne quelque chose qui fonctionne encore dans six mois.
+
+Trois points à connaître :
+
+1. **Interroger une app à l'arrêt la lance.** D'où le test `isRunning` avant
+   toute question — sans lui, LedgeNotch démarrerait Spotify tout seul.
+2. **`NSAppleScript` n'est pas réentrant** et un événement Apple peut bloquer
+   plusieurs dizaines de millisecondes. Tout passe par une file sérielle en
+   arrière-plan, sinon l'animation de l'encoche hoquette.
+3. **Le runtime durci bloque les événements Apple** sans l'autorisation
+   `com.apple.security.automation.apple-events`. La construction en ad-hoc
+   désactive ce runtime et masque le problème jusqu'au jour de la distribution,
+   d'où le fichier `LedgeNotch.entitlements` dès maintenant.
+
+Apple Music fournit les octets de la pochette directement ; Spotify ne donne
+qu'une adresse, que l'app va chercher sur le réseau — le seul appel réseau de
+tout le projet.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
 - [x] Réglages : ouverture au survol, dépassement, retour haptique
 - [x] Claude Code : état des sessions, pastille ambiante, alerte
 - [ ] Étagère à fichiers (glisser-déposer)
-- [ ] Lecteur média — dépend de [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter),
-      Apple ayant verrouillé `MediaRemote` depuis macOS 15.4
+- [x] Lecteur média — Apple Music et Spotify par AppleScript
+- [ ] Étendre le lecteur aux autres sources via
+      [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter)
 - [ ] Réglages : écran cible, lancement au démarrage
 - [ ] Icône et empaquetage `.dmg`
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct NotchView: View {
     @ObservedObject var state: NotchState
     @ObservedObject var monitor: ClaudeCodeMonitor
+    @ObservedObject var music: MusicController
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -20,10 +21,10 @@ struct NotchView: View {
                     openContent
                         .frame(width: size.width, height: size.height)
                         .transition(.opacity)
-                } else if let activity = monitor.overall {
-                    // Repliée, l'encoche se contente d'une pastille : c'est tout
+                } else {
+                    // Repliée, l'encoche se contente d'un signe : c'est tout
                     // l'intérêt d'un état ambiant, savoir sans avoir à regarder.
-                    ActivityDot(activity: activity, size: 6)
+                    closedIndicator
                         .frame(width: size.width, height: size.height, alignment: .trailing)
                         .padding(.trailing, 10)
                         .transition(.opacity)
@@ -37,6 +38,20 @@ struct NotchView: View {
         .ignoresSafeArea()
         .animation(animation, value: state.phase)
         .animation(.easeInOut(duration: 0.25), value: monitor.overall)
+        .animation(.easeInOut(duration: 0.25), value: music.isPlaying)
+    }
+
+    /// Claude passe devant la musique : une session bloquée demande une action,
+    /// un morceau qui tourne n'attend rien de personne.
+    @ViewBuilder
+    private var closedIndicator: some View {
+        if let activity = monitor.overall {
+            ActivityDot(activity: activity, size: 6)
+        } else if music.isPlaying {
+            Image(systemName: "music.note")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.white.opacity(0.55))
+        }
     }
 
     // MARK: - Contenu déployé
@@ -46,6 +61,7 @@ struct NotchView: View {
             Spacer(minLength: 0)
             switch state.panel {
             case .home: homePanel
+            case .music: MusicPanelView(music: music)
             case .claude: ClaudePanelView(monitor: monitor)
             }
             Spacer(minLength: 0)
@@ -73,6 +89,19 @@ struct NotchView: View {
 
     private var toolbar: some View {
         HStack(spacing: 2) {
+            NotchIconButton(
+                isSelected: state.panel == .music,
+                badge: music.isPlaying ? .white.opacity(0.7) : nil,
+                help: "Lecture en cours"
+            ) {
+                state.panel = state.panel == .music ? .home : .music
+                music.refresh()
+            } icon: {
+                Image(systemName: "music.note")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
             NotchIconButton(
                 isSelected: state.panel == .claude,
                 badge: monitor.overall?.color,
