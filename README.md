@@ -34,7 +34,7 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Settings/Preferences.swift` | Les réglages, conservés dans `UserDefaults`. |
 | `Settings/SettingsWindow.swift` | Ouverture de la fenêtre de réglages. |
 | `Settings/SettingsView.swift` | La page de réglages. |
-| `ClaudeCode/ClaudeEventLog.swift` | Surveille `~/.ledgenotch/events.jsonl`. |
+| `ClaudeCode/ClaudeEventLog.swift` | Surveille `~/.ledgenotch/events/claude.jsonl`. |
 | `ClaudeCode/ClaudeCodeMonitor.swift` | Tient l'état des sessions à jour. |
 | `ClaudeCode/ClaudeHooksInstaller.swift` | Écrit les hooks dans `~/.claude/settings.json`. |
 | `ClaudeCode/ClaudePanelView.swift` | La liste des sessions dans l'encoche. |
@@ -77,15 +77,24 @@ Edit Scheme → Run → Arguments :
 ## Claude Code
 
 Les hooks de Claude Code écrivent leur charge utile JSON dans
-`~/.ledgenotch/events.jsonl`, que LedgeNotch surveille :
+`~/.ledgenotch/events/claude.jsonl`, que LedgeNotch surveille :
 
 ```bash
-mkdir -p ~/.ledgenotch && { cat; echo; } >> ~/.ledgenotch/events.jsonl
+mkdir -p ~/.ledgenotch/events && { cat; echo; } >> ~/.ledgenotch/events/claude.jsonl
 ```
 
 Un fichier plutôt qu'un port réseau : aucune alerte du pare-feu, aucun binaire
 intermédiaire, les événements s'accumulent même quand LedgeNotch est arrêté, et
 on peut le lire à la main quand quelque chose cloche.
+
+Un dossier plutôt qu'un fichier unique, avec un fichier par agent. Codex CLI,
+Gemini CLI et OpenCode savent eux aussi signaler leurs événements, chacun dans
+son format ; déduire l'origine du nom du fichier évitera de fabriquer du JSON
+en ligne de commande le jour où on en branche un second. Les adaptateurs
+viendront à ce moment-là — pour un seul agent, ce serait de la structure pour
+rien. Seul le chemin devait être arrêté tôt : il part dans les hooks installés
+chez l'utilisateur, et le changer ensuite les laisserait écrire dans le vide
+sans la moindre erreur visible.
 
 Cinq événements suffisent à reconstituer l'état d'une session :
 

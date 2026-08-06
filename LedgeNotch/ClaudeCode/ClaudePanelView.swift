@@ -14,8 +14,7 @@ struct ClaudePanelView: View {
 
     private var empty: some View {
         VStack(spacing: 8) {
-            ClaudeBurstMark(size: 26)
-                .foregroundStyle(.white.opacity(0.35))
+            ClaudeCodeMark(width: 34, color: .claudeOrange.opacity(0.55))
             Text("Aucune session")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.white.opacity(0.8))

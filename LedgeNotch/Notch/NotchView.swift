@@ -80,7 +80,7 @@ struct NotchView: View {
             ) {
                 state.panel = state.panel == .claude ? .home : .claude
             } icon: {
-                ClaudeBurstMark(size: 14)
+                ClaudeCodeMark(width: 16)
             }
 
             NotchIconButton(

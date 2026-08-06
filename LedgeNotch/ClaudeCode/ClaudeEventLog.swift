@@ -8,17 +8,26 @@ import Foundation
 /// chose cloche, ce qui n'est pas rien pour déboguer une intégration.
 @MainActor
 final class ClaudeEventLog {
+    /// Un dossier plutôt qu'un fichier unique, avec un fichier par agent.
+    ///
+    /// Codex, Gemini CLI et OpenCode savent eux aussi signaler leurs événements,
+    /// mais chacun avec son format. Déduire l'origine du nom du fichier évitera
+    /// de bricoler du JSON en ligne de commande le jour où on en branche un second.
+    ///
+    /// Ce chemin part dans les hooks installés chez l'utilisateur : le changer
+    /// plus tard laisserait ces hooks écrire dans le vide, sans aucune erreur
+    /// visible. D'où le dossier dès maintenant, avant la première installation.
     static let directory = FileManager.default
         .homeDirectoryForCurrentUser
-        .appendingPathComponent(".ledgenotch", isDirectory: true)
+        .appendingPathComponent(".ledgenotch/events", isDirectory: true)
 
-    static let fileURL = directory.appendingPathComponent("events.jsonl")
+    static let fileURL = directory.appendingPathComponent("claude.jsonl")
 
     /// La commande à confier aux hooks. `mkdir -p` la rend auto-réparatrice :
     /// sans lui, un dossier absent ferait échouer le hook et Claude Code
     /// afficherait une erreur à chaque événement.
     nonisolated static let hookCommand =
-        "mkdir -p ~/.ledgenotch && { cat; echo; } >> ~/.ledgenotch/events.jsonl"
+        "mkdir -p ~/.ledgenotch/events && { cat; echo; } >> ~/.ledgenotch/events/claude.jsonl"
 
     /// Au-delà de cette taille, le journal est vidé au démarrage. Seul l'état
     /// courant nous intéresse ; conserver l'historique ne ferait que grossir.
