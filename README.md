@@ -42,6 +42,23 @@ Trois pièges rencontrés, et leur solution, pour mémoire :
    clics (`ignoresMouseEvents`) et ne reçoit donc plus rien. Le suivi passe par
    un moniteur d'événements global — qui ne demande, lui, aucune autorisation
    d'accessibilité.
+4. **`isFloatingPanel = true` réécrit le niveau de la fenêtre** à `.floating` (3).
+   Défini avant lui, le niveau est silencieusement écrasé et la barre de menus
+   repasse devant l'encoche. Il faut donc régler `level` en dernier.
+
+Pour situer : la barre de menus occupe la couche 24, ses icônes de droite la
+couche 25, et les menus déroulants la 101. `CGWindowListCopyWindowInfo` permet
+de lire l'ordre d'empilement réel quand quelque chose passe devant sans raison.
+
+## Mise au point
+
+Deux variables d'environnement, à définir dans Xcode via Product → Scheme →
+Edit Scheme → Run → Arguments :
+
+| Variable | Effet |
+| --- | --- |
+| `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
+| `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
 
 ## Feuille de route
 

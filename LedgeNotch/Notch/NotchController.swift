@@ -32,6 +32,11 @@ final class NotchController {
             object: nil
         )
 
+        if DebugOptions.forceOpen {
+            state.phase = .open
+            return
+        }
+
         tracker.start(
             onMove: { [weak self] point in
                 MainActor.assumeIsolated { self?.handleMouse(at: point) }

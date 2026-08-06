@@ -8,6 +8,11 @@ import AppKit
 /// - un `collectionBehavior` qui la fait suivre l'utilisateur d'un bureau à l'autre
 ///   et survivre au plein écran.
 final class NotchPanel: NSPanel {
+    /// La barre de menus occupe la couche 24, ses icônes de droite la couche 25.
+    /// Un cran au-dessus suffit à passer devant les deux, sans aller déranger
+    /// les menus déroulants (101) ni Mission Control.
+    static let defaultLevel = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
@@ -16,9 +21,6 @@ final class NotchPanel: NSPanel {
             defer: false
         )
 
-        // .statusBar vaut 25, .mainMenu vaut 24 : un cran au-dessus suffit à
-        // recouvrir la barre de menus sans passer devant Mission Control.
-        level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         collectionBehavior = [
             .canJoinAllSpaces,
             .stationary,
@@ -35,6 +37,12 @@ final class NotchPanel: NSPanel {
         hidesOnDeactivate = false
         animationBehavior = .none
         isReleasedWhenClosed = false
+
+        // Impérativement en dernier : `isFloatingPanel = true` réécrit le niveau
+        // à `.floating` (3), soit très en dessous de la barre de menus. Défini
+        // avant, notre niveau est silencieusement écrasé et la barre de menus
+        // repasse devant l'encoche.
+        level = DebugOptions.windowLevel ?? Self.defaultLevel
     }
 
     // Un panneau qui prend le focus ferait perdre le curseur à l'app active.
