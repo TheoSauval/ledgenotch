@@ -91,6 +91,7 @@ struct NotchView: View {
             ) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white)
             }
         }
         .padding(.top, 5)
@@ -143,8 +144,11 @@ private struct NotchIconButton<Icon: View>: View {
 
     var body: some View {
         Button(action: action) {
+            // Une opacité sur l'ensemble plutôt qu'une couleur imposée : l'icône
+            // de Claude Code porte la sienne, et un `foregroundStyle` blanc la
+            // laisserait intacte — donc sans la moindre réaction au survol.
             icon()
-                .foregroundStyle(.white.opacity(opacity))
+                .opacity(opacity)
                 .frame(width: 26, height: 26)
                 .background(
                     Circle().fill(.white.opacity(isSelected ? 0.16 : (isHovering ? 0.12 : 0)))
