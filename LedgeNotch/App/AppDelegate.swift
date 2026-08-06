@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notchController: NotchController?
     private var statusItem: NSStatusItem?
@@ -8,6 +9,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         notchController = NotchController()
         notchController?.start()
         installStatusItem()
+
+        if DebugOptions.openSettings {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { SettingsWindow.open() }
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -40,11 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        NSApp.activate(ignoringOtherApps: true)
-        if #available(macOS 14.0, *) {
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-        }
+        SettingsWindow.open()
     }
 }

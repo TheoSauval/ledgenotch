@@ -11,6 +11,12 @@ enum DebugOptions {
         ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_OPEN"] == "1"
     }
 
+    /// `LEDGENOTCH_OPEN_SETTINGS=1` ouvre la fenêtre de réglages au lancement,
+    /// pour itérer dessus sans repasser par l'engrenage à chaque fois.
+    static var openSettings: Bool {
+        ProcessInfo.processInfo.environment["LEDGENOTCH_OPEN_SETTINGS"] == "1"
+    }
+
     /// `LEDGENOTCH_WINDOW_LEVEL=101` force le niveau du panneau, pour comparer
     /// ce qui passe devant ou derrière la barre de menus.
     static var windowLevel: NSWindow.Level? {

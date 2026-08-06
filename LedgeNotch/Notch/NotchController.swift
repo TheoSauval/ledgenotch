@@ -1,18 +1,22 @@
 import AppKit
+import Combine
 import SwiftUI
 
 /// Fait le lien entre la géométrie de l'écran, le panneau AppKit et l'état SwiftUI.
 ///
 /// Le déroulé voulu : le curseur arrive sur l'encoche, elle dépasse un peu (`peek`) ;
 /// un clic l'ouvre pour de bon (`open`) ; on la referme en cliquant ailleurs ou en
-/// éloignant le curseur.
+/// éloignant le curseur. Le réglage « ouvrir au survol » court-circuite l'étape
+/// intermédiaire.
 @MainActor
 final class NotchController {
     private let state = NotchState()
     private let tracker = MouseTracker()
+    private let preferences = Preferences.shared
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
+    private var cancellables = Set<AnyCancellable>()
 
     /// Délai avant fermeture. Sans lui, l'encoche se referme au moindre
     /// tremblement du curseur près du bord, et l'ensemble paraît nerveux.
@@ -24,6 +28,7 @@ final class NotchController {
 
     func start() {
         rebuild()
+        observePreferences()
 
         NotificationCenter.default.addObserver(
             self,
@@ -50,6 +55,7 @@ final class NotchController {
     func stop() {
         tracker.stop()
         pendingClose?.cancel()
+        cancellables.removeAll()
         NotificationCenter.default.removeObserver(self)
         panel?.orderOut(nil)
         panel = nil
@@ -62,7 +68,10 @@ final class NotchController {
 
         let geometry = NotchGeometry.detect(on: screen)
         self.geometry = geometry
-        state.metrics = NotchMetrics(closedSize: geometry.notchRect.size)
+        state.metrics = NotchMetrics(
+            closedSize: geometry.notchRect.size,
+            peekAmount: preferences.peekAmount
+        )
 
         let panel = self.panel ?? makePanel()
         panel.setFrame(panelFrame(for: geometry), display: true)
@@ -74,10 +83,30 @@ final class NotchController {
 
     private func makePanel() -> NotchPanel {
         let panel = NotchPanel(contentRect: .zero)
-        let hosting = NotchHostingView(rootView: NotchView(state: state))
+        let view = NotchView(state: state) { [weak self] in
+            self?.openSettings()
+        }
+        let hosting = NotchHostingView(rootView: view)
         hosting.autoresizingMask = [.width, .height]
         panel.contentView = hosting
         return panel
+    }
+
+    /// Le réglage du dépassement se voit immédiatement : c'est une valeur qu'on
+    /// ajuste au ressenti, en gardant l'encoche sous les yeux.
+    private func observePreferences() {
+        preferences.$peekAmount
+            .removeDuplicates()
+            .sink { [weak self] amount in
+                MainActor.assumeIsolated {
+                    guard let self, let geometry = self.geometry else { return }
+                    self.state.metrics = NotchMetrics(
+                        closedSize: geometry.notchRect.size,
+                        peekAmount: amount
+                    )
+                }
+            }
+            .store(in: &cancellables)
     }
 
     private func panelFrame(for geometry: NotchGeometry) -> NSRect {
@@ -130,8 +159,13 @@ final class NotchController {
             pendingClose?.cancel()
             pendingClose = nil
             if state.phase == .closed {
-                setPhase(.peek)
-                Haptics.peek()
+                if preferences.openOnHover {
+                    setPhase(.open)
+                    Haptics.open()
+                } else {
+                    setPhase(.peek)
+                    Haptics.peek()
+                }
             }
         } else if state.phase != .closed {
             scheduleClose()
@@ -150,11 +184,10 @@ final class NotchController {
             Haptics.open()
         case .open:
             // Un clic hors de l'encoche ouverte la referme, sans attendre le délai.
+            // À l'intérieur, on laisse le contenu — l'engrenage, plus tard
+            // l'étagère — recevoir le clic.
             guard !rect(for: .open).contains(point) else { return }
-            pendingClose?.cancel()
-            pendingClose = nil
-            setPhase(.closed)
-            Haptics.close()
+            close()
         }
         updateMousePassthrough(at: point)
     }
@@ -173,6 +206,22 @@ final class NotchController {
         }
         pendingClose = work
         DispatchQueue.main.asyncAfter(deadline: .now() + closeDelay, execute: work)
+    }
+
+    private func close() {
+        pendingClose?.cancel()
+        pendingClose = nil
+        let wasOpen = state.isOpen
+        setPhase(.closed)
+        if wasOpen { Haptics.close() }
+    }
+
+    /// L'encoche se referme avant d'ouvrir les réglages : la laisser déployée
+    /// par-dessus la fenêtre qu'on vient d'appeler n'aurait pas de sens.
+    private func openSettings() {
+        close()
+        updateMousePassthrough(at: tracker.location)
+        SettingsWindow.open()
     }
 
     private func setPhase(_ phase: NotchState.Phase) {

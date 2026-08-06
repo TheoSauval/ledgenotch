@@ -30,7 +30,10 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Notch/Haptics.swift` | Retour haptique du trackpad, et ses limites. |
 | `Notch/NotchController.swift` | Assemble le tout et décide de l'ouverture. |
 | `Notch/NotchShape.swift` | La silhouette, coins supérieurs rentrants compris. |
-| `Notch/NotchView.swift` | Le contenu SwiftUI et son animation. |
+| `Notch/NotchView.swift` | Le contenu SwiftUI, son animation et l'engrenage. |
+| `Settings/Preferences.swift` | Les réglages, conservés dans `UserDefaults`. |
+| `Settings/SettingsWindow.swift` | Ouverture de la fenêtre de réglages. |
+| `Settings/SettingsView.swift` | La page de réglages. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -45,6 +48,11 @@ Trois pièges rencontrés, et leur solution, pour mémoire :
 4. **`isFloatingPanel = true` réécrit le niveau de la fenêtre** à `.floating` (3).
    Défini avant lui, le niveau est silencieusement écrasé et la barre de menus
    repasse devant l'encoche. Il faut donc régler `level` en dernier.
+5. **La scène `Settings` de SwiftUI n'ouvre rien en `.accessory`.** L'action
+   `showSettingsWindow:` est pourtant bien reçue — elle renvoie `true` — mais
+   aucune fenêtre n'apparaît tant que l'app n'a pas d'icône dans le Dock. D'où
+   le point d'entrée AppKit et la fenêtre construite à la main, qui bascule en
+   `.regular` le temps de la consultation.
 
 Pour situer : la barre de menus occupe la couche 24, ses icônes de droite la
 couche 25, et les menus déroulants la 101. `CGWindowListCopyWindowInfo` permet
@@ -58,15 +66,17 @@ Edit Scheme → Run → Arguments :
 | Variable | Effet |
 | --- | --- |
 | `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
+| `LEDGENOTCH_OPEN_SETTINGS=1` | Ouvre la fenêtre de réglages au lancement. |
 | `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
 
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
+- [x] Réglages : ouverture au survol, dépassement, retour haptique
 - [ ] Étagère à fichiers (glisser-déposer)
 - [ ] Lecteur média — dépend de [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter),
       Apple ayant verrouillé `MediaRemote` depuis macOS 15.4
-- [ ] Réglages : écran cible, taille ouverte, lancement au démarrage
+- [ ] Réglages : écran cible, lancement au démarrage
 - [ ] Icône et empaquetage `.dmg`
 
 ## Distribution

@@ -8,6 +8,7 @@ import AppKit
 /// - **un doigt doit reposer sur le trackpad au moment du retour**. Cliquer puis
 ///   lever le doigt aussitôt ne laisse rien sentir ;
 /// - le réglage système « Retour du Force Touch » peut le désactiver globalement.
+@MainActor
 enum Haptics {
     /// Ouverture : le cran net d'un mécanisme qui s'enclenche.
     static func open() {
@@ -26,6 +27,7 @@ enum Haptics {
     }
 
     private static func perform(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {
+        guard Preferences.shared.hapticsEnabled else { return }
         NSHapticFeedbackManager.defaultPerformer.perform(
             pattern,
             performanceTime: .now

@@ -14,13 +14,14 @@ struct NotchMetrics {
     /// et les coins rentrants, qui débordent de la forme.
     let padding: CGFloat = 24
 
-    init(closedSize: CGSize) {
+    /// - Parameter peekAmount: de combien de points l'encoche s'élargit au survol.
+    ///   La hauteur suit à un tiers de cette valeur : grandir autant en hauteur
+    ///   qu'en largeur descendrait trop bas sur la barre de menus.
+    init(closedSize: CGSize, peekAmount: Double = 30) {
         self.closedSize = closedSize
-        // Assez pour qu'on voie l'encoche réagir, trop peu pour gêner la lecture
-        // de la barre de menus.
         self.peekSize = CGSize(
-            width: closedSize.width + 30,
-            height: closedSize.height + 14
+            width: closedSize.width + peekAmount,
+            height: closedSize.height + peekAmount / 3
         )
         self.openSize = CGSize(
             width: max(closedSize.width * 2.1, 420),
