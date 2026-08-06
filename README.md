@@ -2,7 +2,8 @@
 
 Une étagère dans l'encoche du Mac. Application macOS native, en Swift et SwiftUI.
 
-> État : socle technique. L'encoche s'ouvre et se referme au survol.
+> État : socle technique. Le curseur fait dépasser l'encoche, un clic l'ouvre,
+> avec retour haptique sur le trackpad.
 > Les fonctionnalités (étagère à fichiers, lecteur média) restent à écrire.
 
 ## Lancer le projet
@@ -25,7 +26,8 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Notch/NotchGeometry.swift` | Trouve l'encoche via `safeAreaInsets` et les zones auxiliaires de l'écran. En simule une sur les écrans qui n'en ont pas. |
 | `Notch/NotchPanel.swift` | Le `NSPanel` posé au-dessus de la barre de menus. |
 | `Notch/NotchHostingView.swift` | Hôte SwiftUI qui ignore la zone de sécurité. |
-| `Notch/MouseTracker.swift` | Suit le curseur à l'échelle du système. |
+| `Notch/MouseTracker.swift` | Suit le curseur et les clics à l'échelle du système. |
+| `Notch/Haptics.swift` | Retour haptique du trackpad, et ses limites. |
 | `Notch/NotchController.swift` | Assemble le tout et décide de l'ouverture. |
 | `Notch/NotchShape.swift` | La silhouette, coins supérieurs rentrants compris. |
 | `Notch/NotchView.swift` | Le contenu SwiftUI et son animation. |

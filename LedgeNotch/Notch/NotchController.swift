@@ -2,6 +2,10 @@ import AppKit
 import SwiftUI
 
 /// Fait le lien entre la géométrie de l'écran, le panneau AppKit et l'état SwiftUI.
+///
+/// Le déroulé voulu : le curseur arrive sur l'encoche, elle dépasse un peu (`peek`) ;
+/// un clic l'ouvre pour de bon (`open`) ; on la referme en cliquant ailleurs ou en
+/// éloignant le curseur.
 @MainActor
 final class NotchController {
     private let state = NotchState()
@@ -12,7 +16,11 @@ final class NotchController {
 
     /// Délai avant fermeture. Sans lui, l'encoche se referme au moindre
     /// tremblement du curseur près du bord, et l'ensemble paraît nerveux.
-    private let closeDelay: TimeInterval = 0.18
+    /// Plus long une fois ouverte : l'utilisateur a cliqué pour en arriver là,
+    /// ce serait vexant de le lui reprendre au premier écart.
+    private var closeDelay: TimeInterval {
+        state.isOpen ? 0.45 : 0.18
+    }
 
     func start() {
         rebuild()
@@ -24,11 +32,14 @@ final class NotchController {
             object: nil
         )
 
-        tracker.start { [weak self] point in
-            MainActor.assumeIsolated {
-                self?.handleMouse(at: point)
+        tracker.start(
+            onMove: { [weak self] point in
+                MainActor.assumeIsolated { self?.handleMouse(at: point) }
+            },
+            onClick: { [weak self] point in
+                MainActor.assumeIsolated { self?.handleClick(at: point) }
             }
-        }
+        )
     }
 
     func stop() {
@@ -53,7 +64,7 @@ final class NotchController {
         panel.orderFrontRegardless()
         self.panel = panel
 
-        applyPhase()
+        updateMousePassthrough(at: tracker.location)
     }
 
     private func makePanel() -> NotchPanel {
@@ -75,12 +86,18 @@ final class NotchController {
         )
     }
 
-    /// Rectangle réellement occupé par l'encoche ouverte, en coordonnées écran.
-    /// Le panneau est plus large que ça (marge pour l'ombre) : se fier à son cadre
+    /// Rectangle réellement occupé par la forme, en coordonnées écran.
+    ///
+    /// Le panneau est plus grand que ça (marge pour l'ombre) : se fier à son cadre
     /// pour décider de la fermeture garderait l'encoche ouverte au-dessus du vide.
-    private var openRect: CGRect {
+    private func rect(for phase: NotchState.Phase) -> CGRect {
         guard let geometry else { return .zero }
-        let size = state.metrics.openSize
+        let size: CGSize
+        switch phase {
+        case .closed: size = state.metrics.closedSize
+        case .peek: size = state.metrics.peekSize
+        case .open: size = state.metrics.openSize
+        }
         return CGRect(
             x: geometry.notchRect.midX - size.width / 2,
             y: geometry.screen.frame.maxY - size.height,
@@ -89,45 +106,81 @@ final class NotchController {
         )
     }
 
-    // MARK: - Survol
+    /// Zone à l'intérieur de laquelle le curseur maintient l'état courant.
+    private func activeRect() -> CGRect {
+        guard let geometry else { return .zero }
+        switch state.phase {
+        case .closed: return state.metrics.hoverRect(around: geometry.notchRect)
+        case .peek: return rect(for: .peek)
+        case .open: return rect(for: .open)
+        }
+    }
+
+    // MARK: - Survol et clic
 
     private func handleMouse(at point: CGPoint) {
-        guard let geometry else { return }
+        guard geometry != nil else { return }
 
-        let inside: Bool
-        if state.isOpen {
-            inside = openRect.contains(point)
-        } else {
-            inside = state.metrics.hoverRect(around: geometry.notchRect).contains(point)
-        }
-
-        if inside {
+        if activeRect().contains(point) {
             pendingClose?.cancel()
             pendingClose = nil
-            setPhase(.open)
-        } else if state.isOpen, pendingClose == nil {
-            let work = DispatchWorkItem { [weak self] in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.pendingClose = nil
-                    self.setPhase(.closed)
-                }
+            if state.phase == .closed {
+                setPhase(.peek)
+                Haptics.peek()
             }
-            pendingClose = work
-            DispatchQueue.main.asyncAfter(deadline: .now() + closeDelay, execute: work)
+        } else if state.phase != .closed {
+            scheduleClose()
         }
+
+        updateMousePassthrough(at: point)
+    }
+
+    private func handleClick(at point: CGPoint) {
+        switch state.phase {
+        case .closed:
+            break
+        case .peek:
+            guard rect(for: .peek).contains(point) else { return }
+            setPhase(.open)
+            Haptics.open()
+        case .open:
+            // Un clic hors de l'encoche ouverte la referme, sans attendre le délai.
+            guard !rect(for: .open).contains(point) else { return }
+            pendingClose?.cancel()
+            pendingClose = nil
+            setPhase(.closed)
+            Haptics.close()
+        }
+        updateMousePassthrough(at: point)
+    }
+
+    private func scheduleClose() {
+        guard pendingClose == nil else { return }
+        let wasOpen = state.isOpen
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.pendingClose = nil
+                self.setPhase(.closed)
+                if wasOpen { Haptics.close() }
+                self.updateMousePassthrough(at: self.tracker.location)
+            }
+        }
+        pendingClose = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + closeDelay, execute: work)
     }
 
     private func setPhase(_ phase: NotchState.Phase) {
         guard state.phase != phase else { return }
         state.phase = phase
-        applyPhase()
     }
 
-    private func applyPhase() {
-        // Fermée, l'encoche doit laisser passer les clics : elle recouvre la barre
-        // de menus, et l'utilisateur doit pouvoir cliquer sur l'horloge à travers.
-        panel?.ignoresMouseEvents = !state.isOpen
+    /// Le panneau ne doit intercepter les clics que là où il y a vraiment quelque
+    /// chose à cliquer. Partout ailleurs il recouvre la barre de menus, et
+    /// l'utilisateur doit pouvoir atteindre l'horloge à travers.
+    private func updateMousePassthrough(at point: CGPoint) {
+        let interactive = state.isOpen && rect(for: .open).contains(point)
+        panel?.ignoresMouseEvents = !interactive
     }
 
     @objc private func screenParametersChanged() {

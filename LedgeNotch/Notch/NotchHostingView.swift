@@ -10,6 +10,11 @@ final class NotchHostingView<Content: View>: NSHostingView<Content> {
         NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
     }
 
+    /// Le panneau ne devient jamais fenêtre active : tout clic est donc un
+    /// « premier clic ». Sans cette surcharge, il servirait seulement à donner le
+    /// focus et le contenu ne le verrait pas passer.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     required init(rootView: Content) {
         super.init(rootView: rootView)
     }
