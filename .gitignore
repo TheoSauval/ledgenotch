@@ -1,0 +1,21 @@
+# Xcode
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Artefacts de distribution
+*.dmg
+*.zip
+dist/
+
+# macOS
+.DS_Store
