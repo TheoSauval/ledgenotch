@@ -45,14 +45,14 @@ struct NotchView: View {
     /// à cet endroit, seulement le boîtier physique.
     private var closedSlots: some View {
         HStack(spacing: 0) {
-            leftSlot.frame(width: state.metrics.sideSlotWidth)
+            artworkSlot.frame(width: state.metrics.sideSlotWidth)
             Spacer(minLength: 0)
-            rightSlot.frame(width: state.metrics.sideSlotWidth)
+            equalizerSlot.frame(width: state.metrics.sideSlotWidth)
         }
     }
 
     @ViewBuilder
-    private var leftSlot: some View {
+    private var equalizerSlot: some View {
         if music.track != nil {
             SoundBars(height: 13)
                 .opacity(music.isPlaying ? 1 : 0.3)
@@ -64,7 +64,7 @@ struct NotchView: View {
     /// sur le coin de la pochette : une session bloquée demande une action, et
     /// ne doit jamais disparaître derrière un morceau qui tourne.
     @ViewBuilder
-    private var rightSlot: some View {
+    private var artworkSlot: some View {
         if let artwork = music.artwork {
             Image(nsImage: artwork)
                 .resizable()
