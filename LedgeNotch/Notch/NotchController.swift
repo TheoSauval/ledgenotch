@@ -34,6 +34,7 @@ final class NotchController {
         claude.start()
         observeClaude()
         music.start()
+        observeSideContent()
 
         NotificationCenter.default.addObserver(
             self,
@@ -131,6 +132,25 @@ final class NotchController {
             .store(in: &cancellables)
     }
 
+    /// L'encoche repliée ne s'élargit que lorsqu'elle a réellement quelque chose
+    /// à montrer. Le reste du temps elle épouse le boîtier caméra et se fait
+    /// oublier, ce qui est tout l'intérêt du procédé.
+    private func observeSideContent() {
+        Publishers.CombineLatest(music.$track, claude.$sessions)
+            .map { track, sessions in
+                track != nil || sessions.contains { $0.activity != .idle }
+            }
+            .removeDuplicates()
+            .sink { [weak self] hasContent in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.state.sideContent = hasContent
+                    self.updateMousePassthrough(at: self.tracker.location)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
     private func flashForAttention() {
         guard preferences.alertOnClaudeEvents else { return }
         // Encoche déjà sortie : inutile d'insister, et la refermer derrière
@@ -160,7 +180,7 @@ final class NotchController {
         guard let geometry else { return .zero }
         let size: CGSize
         switch phase {
-        case .closed: size = state.metrics.closedSize
+        case .closed: size = state.metrics.closedSize(withSlots: state.sideContent)
         case .peek: size = state.metrics.peekSize
         case .open: size = state.metrics.openSize
         }
@@ -176,7 +196,11 @@ final class NotchController {
     private func activeRect() -> CGRect {
         guard let geometry else { return .zero }
         switch state.phase {
-        case .closed: return state.metrics.hoverRect(around: geometry.notchRect)
+        case .closed:
+            // Élargie, l'encoche déborde du boîtier : la zone sensible doit
+            // suivre, sinon survoler la pochette ne déclencherait rien.
+            return state.metrics.hoverRect(around: geometry.notchRect)
+                .union(rect(for: .closed))
         case .peek: return rect(for: .peek)
         case .open: return rect(for: .open)
         }

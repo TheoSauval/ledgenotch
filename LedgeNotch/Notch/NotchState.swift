@@ -23,9 +23,14 @@ final class NotchState: ObservableObject {
     @Published var panel: Panel = .home
     @Published var metrics = NotchMetrics(closedSize: NotchGeometry.simulatedSize)
 
+    /// Vrai quand l'encoche repliée a quelque chose à montrer — pochette,
+    /// égaliseur, session Claude. Elle s'élargit alors de part et d'autre du
+    /// boîtier caméra, seul endroit où ce contenu est réellement visible.
+    @Published var sideContent = false
+
     var currentSize: CGSize {
         switch phase {
-        case .closed: return metrics.closedSize
+        case .closed: return metrics.closedSize(withSlots: sideContent)
         case .peek: return metrics.peekSize
         case .open: return metrics.openSize
         }

@@ -45,6 +45,7 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Music/AppleScriptRunner.swift` | Exécution hors du fil principal. |
 | `Music/MusicController.swift` | Sondage, pochettes et commandes. |
 | `Music/MusicPanelView.swift` | Le lecteur dans l'encoche. |
+| `Music/SoundBars.swift` | L'égaliseur animé de l'encoche repliée. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -59,7 +60,14 @@ Trois pièges rencontrés, et leur solution, pour mémoire :
 4. **`isFloatingPanel = true` réécrit le niveau de la fenêtre** à `.floating` (3).
    Défini avant lui, le niveau est silencieusement écrasé et la barre de menus
    repasse devant l'encoche. Il faut donc régler `level` en dernier.
-5. **La scène `Settings` de SwiftUI n'ouvre rien en `.accessory`.** L'action
+5. **Il n'y a pas d'écran derrière l'encoche.** Entre `auxiliaryTopLeftArea`
+   et `auxiliaryTopRightArea` se trouve le boîtier physique de la caméra : ce
+   qu'on y dessine part dans le vide. Le piège est qu'une capture d'écran lit
+   la mémoire vidéo, qui contient bien cette zone — le contenu invisible sur la
+   dalle apparaît donc parfaitement sur la capture. D'où l'élargissement de
+   l'encoche repliée dès qu'elle a quelque chose à montrer, pour placer ce
+   contenu de part et d'autre du boîtier.
+6. **La scène `Settings` de SwiftUI n'ouvre rien en `.accessory`.** L'action
    `showSettingsWindow:` est pourtant bien reçue — elle renvoie `true` — mais
    aucune fenêtre n'apparaît tant que l'app n'a pas d'icône dans le Dock. D'où
    le point d'entrée AppKit et la fenêtre construite à la main, qui bascule en

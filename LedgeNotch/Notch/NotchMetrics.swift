@@ -29,6 +29,23 @@ struct NotchMetrics {
         )
     }
 
+    /// Largeur d'un compartiment latéral, de part et d'autre du boîtier caméra.
+    ///
+    /// Indispensable : entre `auxiliaryTopLeftArea` et `auxiliaryTopRightArea`
+    /// il n'y a pas d'écran, seulement le boîtier physique. Tout ce qu'on
+    /// dessinerait à l'emplacement de l'encoche serait invisible — présent dans
+    /// la mémoire vidéo, donc visible sur une capture, mais pas sur la dalle.
+    let sideSlotWidth: CGFloat = 40
+
+    /// L'encoche repliée, élargie quand elle a quelque chose à montrer.
+    func closedSize(withSlots slots: Bool) -> CGSize {
+        guard slots else { return closedSize }
+        return CGSize(
+            width: closedSize.width + sideSlotWidth * 2,
+            height: closedSize.height
+        )
+    }
+
     var panelSize: CGSize {
         CGSize(
             width: openSize.width + padding * 2,

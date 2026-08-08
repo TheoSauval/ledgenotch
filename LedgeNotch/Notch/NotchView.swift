@@ -21,12 +21,11 @@ struct NotchView: View {
                     openContent
                         .frame(width: size.width, height: size.height)
                         .transition(.opacity)
-                } else {
+                } else if state.sideContent {
                     // Repliée, l'encoche se contente d'un signe : c'est tout
                     // l'intérêt d'un état ambiant, savoir sans avoir à regarder.
-                    closedIndicator
-                        .frame(width: size.width, height: size.height, alignment: .trailing)
-                        .padding(.trailing, 10)
+                    closedSlots
+                        .frame(width: size.width, height: size.height)
                         .transition(.opacity)
                 }
             }
@@ -41,15 +40,51 @@ struct NotchView: View {
         .animation(.easeInOut(duration: 0.25), value: music.isPlaying)
     }
 
-    /// Claude passe devant la musique : une session bloquée demande une action,
-    /// un morceau qui tourne n'attend rien de personne.
+    /// Les deux compartiments de l'encoche repliée, de part et d'autre du
+    /// boîtier caméra. Rien ne doit être placé entre eux : il n'y a pas d'écran
+    /// à cet endroit, seulement le boîtier physique.
+    private var closedSlots: some View {
+        HStack(spacing: 0) {
+            leftSlot.frame(width: state.metrics.sideSlotWidth)
+            Spacer(minLength: 0)
+            rightSlot.frame(width: state.metrics.sideSlotWidth)
+        }
+    }
+
     @ViewBuilder
-    private var closedIndicator: some View {
-        if let activity = monitor.overall {
+    private var leftSlot: some View {
+        if music.track != nil {
+            SoundBars(height: 13)
+                .opacity(music.isPlaying ? 1 : 0.3)
+        }
+    }
+
+    /// La pochette prend la place quand il y a de la musique ; sinon la pastille
+    /// de Claude s'y installe. Quand les deux coexistent, Claude passe en écusson
+    /// sur le coin de la pochette : une session bloquée demande une action, et
+    /// ne doit jamais disparaître derrière un morceau qui tourne.
+    @ViewBuilder
+    private var rightSlot: some View {
+        if let artwork = music.artwork {
+            Image(nsImage: artwork)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 22, height: 22)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .overlay(alignment: .topTrailing) {
+                    if let activity = monitor.overall {
+                        Circle()
+                            .fill(activity.color)
+                            .frame(width: 6, height: 6)
+                            .overlay(Circle().stroke(.black, lineWidth: 1.2))
+                            .offset(x: 2, y: -2)
+                    }
+                }
+        } else if let activity = monitor.overall {
             ActivityDot(activity: activity, size: 6)
-        } else if music.isPlaying {
-            Image(systemName: "music.note")
-                .font(.system(size: 9, weight: .bold))
+        } else if music.track != nil {
+            Image(systemName: music.source?.symbolName ?? "music.note")
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.55))
         }
     }
