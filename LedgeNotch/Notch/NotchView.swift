@@ -101,11 +101,19 @@ struct NotchView: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.top, 22)
+        .padding(.top, topInset)
         // Sans cette extension, la barre d'icônes se calerait sur la largeur
         // naturelle du contenu au lieu du bord de l'encoche.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .topTrailing) { toolbar }
+    }
+
+    /// Seule la liste des sessions a besoin de s'écarter du haut : ses lignes
+    /// s'étendent jusqu'au bord droit et passeraient sous la barre d'icônes.
+    /// Les autres panneaux se centrent sur toute la hauteur, sans quoi ils
+    /// paraissent posés trop bas.
+    private var topInset: CGFloat {
+        state.panel == .claude ? 24 : 0
     }
 
     private var homePanel: some View {

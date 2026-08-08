@@ -55,38 +55,45 @@ struct MusicPanelView: View {
 
     // MARK: - Lecteur
 
+    private var controlsBlocked: Bool {
+        music.source == .youtube && music.browserBlocksJavaScript
+    }
+
+    /// Tout sur une seule ligne : pochette, puis le texte qui occupe la place
+    /// disponible, puis les commandes calées à droite. Empiler le texte et les
+    /// boutons laissait tout le tiers droit du panneau vide.
     private func player(_ track: MusicTrack) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            artwork(for: track)
+        VStack(spacing: 0) {
+            HStack(spacing: 15) {
+                artwork(for: track)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(track.title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(track.title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
 
-                if !track.subtitle.isEmpty {
-                    Text(track.subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .lineLimit(1)
+                    if !track.subtitle.isEmpty {
+                        Text(track.subtitle)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.white.opacity(0.55))
+                            .lineLimit(1)
+                    }
+
+                    changeSourceButton.padding(.top, 2)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                changeSourceButton.padding(.top, 1)
-
-                Spacer(minLength: 6)
-
-                if music.source == .youtube, music.browserBlocksJavaScript {
-                    javaScriptHint
-                } else {
+                if !controlsBlocked {
                     transport(isPlaying: track.isPlaying)
                 }
             }
-            .frame(height: 96, alignment: .topLeading)
 
-            Spacer(minLength: 0)
+            if controlsBlocked {
+                javaScriptHint.padding(.top, 12)
+            }
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, 20)
     }
 
     private func artwork(for track: MusicTrack) -> some View {
@@ -104,7 +111,7 @@ struct MusicPanelView: View {
                 }
             }
         }
-        .frame(width: 96, height: 96)
+        .frame(width: 84, height: 84)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 
@@ -135,14 +142,14 @@ struct MusicPanelView: View {
     }
 
     private func transport(isPlaying: Bool) -> some View {
-        HStack(spacing: 16) {
-            TransportButton(system: "backward.fill", size: 13, action: music.previous)
+        HStack(spacing: 10) {
+            TransportButton(system: "backward.fill", size: 14, action: music.previous)
             TransportButton(
                 system: isPlaying ? "pause.fill" : "play.fill",
-                size: 18,
+                size: 21,
                 action: music.playPause
             )
-            TransportButton(system: "forward.fill", size: 13, action: music.next)
+            TransportButton(system: "forward.fill", size: 14, action: music.next)
         }
     }
 }
