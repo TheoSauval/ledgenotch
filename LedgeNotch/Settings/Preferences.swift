@@ -15,6 +15,7 @@ final class Preferences: ObservableObject {
         static let hapticsEnabled = "hapticsEnabled"
         static let peekAmount = "peekAmount"
         static let alertOnClaudeEvents = "alertOnClaudeEvents"
+        static let musicSource = "musicSource"
     }
 
     /// Ouvrir l'encoche au simple survol, sans attendre le clic.
@@ -36,6 +37,12 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(alertOnClaudeEvents, forKey: Key.alertOnClaudeEvents) }
     }
 
+    /// La source de lecture choisie. `nil` tant que l'utilisateur n'a pas
+    /// tranché : l'encoche affiche alors le sélecteur.
+    @Published var musicSource: MusicApp? {
+        didSet { defaults.set(musicSource?.rawValue, forKey: Key.musicSource) }
+    }
+
     static let peekRange: ClosedRange<Double> = 0...80
 
     private let defaults: UserDefaults
@@ -52,6 +59,7 @@ final class Preferences: ObservableObject {
         hapticsEnabled = defaults.bool(forKey: Key.hapticsEnabled)
         peekAmount = defaults.double(forKey: Key.peekAmount)
         alertOnClaudeEvents = defaults.bool(forKey: Key.alertOnClaudeEvents)
+        musicSource = defaults.string(forKey: Key.musicSource).flatMap(MusicApp.init(rawValue:))
     }
 
     func resetToDefaults() {
@@ -59,5 +67,6 @@ final class Preferences: ObservableObject {
         hapticsEnabled = true
         peekAmount = 30
         alertOnClaudeEvents = true
+        musicSource = nil
     }
 }

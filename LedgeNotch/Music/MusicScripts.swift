@@ -12,9 +12,9 @@ enum MusicScripts {
     /// Le `try` est indispensable : `current track` lève une erreur dès que la
     /// file d'attente est vide, ce qui est le cas ordinaire d'une app ouverte
     /// mais inutilisée.
-    static func nowPlaying(for app: MusicApp) -> String {
+    static func nowPlaying(applicationNamed name: String) -> String {
         """
-        tell application "\(app.scriptingName)"
+        tell application "\(name)"
             try
                 if player state is stopped then return ""
                 set sep to (ASCII character 31)
@@ -61,9 +61,9 @@ enum MusicScripts {
         case previous = "previous track"
     }
 
-    static func command(_ command: Command, for app: MusicApp) -> String {
+    static func command(_ command: Command, applicationNamed name: String) -> String {
         """
-        tell application "\(app.scriptingName)"
+        tell application "\(name)"
             try
                 \(command.rawValue)
             end try

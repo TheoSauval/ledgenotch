@@ -6,7 +6,7 @@ struct SettingsView: View {
     @State private var geometry: NotchGeometry?
     @State private var hooksInstalled = ClaudeHooksInstaller.isInstalled
     @State private var hooksError: String?
-    @State private var players: [MusicApp] = MusicApp.running
+    @State private var players: [MusicApp] = MusicApp.available
 
     var body: some View {
         Form {
@@ -55,7 +55,11 @@ struct SettingsView: View {
                     }
                 }
 
-                Text("LedgeNotch pilote Apple Music et Spotify par AppleScript. Les autres sources — navigateur, podcasts, lecteurs tiers — resteront invisibles tant qu'Apple gardera `MediaRemote` verrouillé. L'autorisation se règle dans Réglages Système → Confidentialité et sécurité → Automatisation.")
+                Text("La source se choisit dans l'encoche, onglet musique. Apple Music et Spotify sont pilotés par AppleScript ; YouTube passe par l'onglet du navigateur.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Text("Pour commander une vidéo YouTube — et pas seulement l'afficher — il faut autoriser « JavaScript depuis les Apple Events » : dans Chrome via Affichage → Développeur, dans Safari via Développement après avoir activé les fonctionnalités pour développeurs web.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -126,7 +130,7 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             refreshGeometry()
-            players = MusicApp.running
+            players = MusicApp.available
         }
         .onReceive(
             NotificationCenter.default.publisher(

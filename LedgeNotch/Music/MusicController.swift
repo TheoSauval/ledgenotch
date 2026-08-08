@@ -1,7 +1,11 @@
 import AppKit
 import Combine
 
-/// Suit ce qui joue, et pilote la lecture.
+/// Suit ce qui joue sur la source choisie, et pilote la lecture.
+///
+/// Une seule source à la fois, celle que l'utilisateur a désignée. Interroger
+/// les trois en permanence enverrait des événements Apple à des apps dont il ne
+/// veut rien, et obligerait à départager deux lecteurs qui jouent en même temps.
 @MainActor
 final class MusicController: ObservableObject {
     @Published private(set) var track: MusicTrack?
@@ -11,28 +15,60 @@ final class MusicController: ObservableObject {
     /// Confidentialité et sécurité. On cesse alors d'insister et on l'explique.
     @Published private(set) var isAuthorised = true
 
-    /// Assez fréquent pour suivre un changement de morceau, assez espacé pour
-    /// qu'un événement Apple toutes les trois secondes ne pèse pas.
+    /// Vrai quand le navigateur refuse d'exécuter du JavaScript : on sait alors
+    /// afficher la vidéo, mais pas la commander.
+    @Published private(set) var browserBlocksJavaScript = false
+
+    /// Le navigateur où la vidéo a été trouvée, pour lui adresser les commandes.
+    @Published private(set) var youTubeBrowser: Browser?
+
+    private let preferences = Preferences.shared
     private let interval: TimeInterval = 3
 
     private var timer: Timer?
     private var artworkIdentity: String?
+    private var cancellables = Set<AnyCancellable>()
 
+    var source: MusicApp? { preferences.musicSource }
     var isPlaying: Bool { track?.isPlaying == true }
 
     func start() {
         refresh()
+
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
         }
         // Sans ce mode, le sondage se fige pendant qu'un menu est ouvert.
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
+
+        preferences.$musicSource
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.reset()
+                    self?.refresh()
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func stop() {
         timer?.invalidate()
         timer = nil
+        cancellables.removeAll()
+    }
+
+    func choose(_ source: MusicApp?) {
+        preferences.musicSource = source
+    }
+
+    private func reset() {
+        track = nil
+        artwork = nil
+        artworkIdentity = nil
+        browserBlocksJavaScript = false
+        youTubeBrowser = nil
     }
 
     // MARK: - Commandes
@@ -42,69 +78,111 @@ final class MusicController: ObservableObject {
     func previous() { send(.previous) }
 
     private func send(_ command: MusicScripts.Command) {
-        guard let app = track?.source else { return }
-        AppleScriptRunner.run(MusicScripts.command(command, for: app)) { [weak self] _ in
-            // Le lecteur met un instant à appliquer la commande : interroger
-            // trop tôt renverrait l'état précédent et ferait clignoter l'affichage.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                MainActor.assumeIsolated { self?.refresh() }
-            }
+        guard let source else { return }
+
+        if source == .youtube {
+            guard let browser = youTubeBrowser else { return }
+            YouTubeBridge.command(command, in: browser)
+            scheduleFollowUp()
+            return
+        }
+
+        guard let name = source.scriptingName else { return }
+        AppleScriptRunner.run(MusicScripts.command(command, applicationNamed: name)) { [weak self] _ in
+            self?.scheduleFollowUp()
+        }
+    }
+
+    /// Le lecteur met un instant à appliquer la commande : interroger trop tôt
+    /// renverrait l'état précédent et ferait clignoter l'affichage.
+    private func scheduleFollowUp() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
+            MainActor.assumeIsolated { self?.refresh() }
         }
     }
 
     // MARK: - Sondage
 
     func refresh() {
-        let apps = MusicApp.running
-        guard !apps.isEmpty else {
-            adopt([:])
+        guard let source else {
+            if track != nil { reset() }
             return
         }
 
-        var results: [MusicApp: MusicTrack] = [:]
-        var pending = apps.count
+        switch source {
+        case .appleMusic, .spotify:
+            refreshApplication(source)
+        case .youtube:
+            refreshYouTube()
+        }
+    }
 
-        for app in apps {
-            AppleScriptRunner.run(MusicScripts.nowPlaying(for: app)) { [weak self] result in
-                guard let self else { return }
-                switch result {
-                case .success(let descriptor):
-                    self.isAuthorised = true
-                    if let parsed = Self.parse(descriptor.stringValue, source: app) {
-                        results[app] = parsed
-                    }
-                case .failure(.notAuthorized):
-                    self.isAuthorised = false
-                case .failure:
-                    break
-                }
+    private func refreshApplication(_ source: MusicApp) {
+        guard source.isAvailable, let name = source.scriptingName else {
+            adopt(nil)
+            return
+        }
 
-                pending -= 1
-                if pending == 0 { self.adopt(results) }
+        AppleScriptRunner.run(MusicScripts.nowPlaying(applicationNamed: name)) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let descriptor):
+                self.isAuthorised = true
+                self.adopt(Self.parse(descriptor.stringValue, source: source))
+            case .failure(.notAuthorized):
+                self.isAuthorised = false
+                self.adopt(nil)
+            case .failure:
+                self.adopt(nil)
             }
         }
     }
 
-    /// Entre deux lecteurs ouverts, celui qui joue l'emporte : c'est celui que
-    /// l'utilisateur écoute, même si l'autre garde un morceau en pause.
-    private func adopt(_ results: [MusicApp: MusicTrack]) {
-        let chosen = results.values.first(where: \.isPlaying)
-            ?? results.values.sorted { $0.source.rawValue < $1.source.rawValue }.first
+    private func refreshYouTube() {
+        YouTubeBridge.findTab { [weak self] tab in
+            guard let self else { return }
+            guard let tab else {
+                self.youTubeBrowser = nil
+                self.adopt(nil)
+                return
+            }
 
-        guard track != chosen else { return }
-        track = chosen
+            self.youTubeBrowser = tab.browser
+            YouTubeBridge.playbackState(in: tab.browser) { playing in
+                // Sans JavaScript on ne sait pas si la vidéo tourne. On la
+                // suppose en lecture : c'est le cas le plus fréquent quand un
+                // onglet YouTube est ouvert, et l'inverse afficherait en
+                // permanence un bouton lecture trompeur.
+                self.browserBlocksJavaScript = (playing == nil)
+                self.adopt(
+                    MusicTrack(
+                        source: .youtube,
+                        title: tab.title,
+                        artist: tab.browser.scriptingName,
+                        album: "",
+                        isPlaying: playing ?? true
+                    ),
+                    videoID: tab.videoID
+                )
+            }
+        }
+    }
 
-        guard let chosen else {
+    private func adopt(_ new: MusicTrack?, videoID: String? = nil) {
+        guard track != new else { return }
+        track = new
+
+        guard let new else {
             artwork = nil
             artworkIdentity = nil
             return
         }
-        if artworkIdentity != chosen.identity {
-            loadArtwork(for: chosen)
+        if artworkIdentity != new.identity {
+            loadArtwork(for: new, videoID: videoID)
         }
     }
 
-    private func loadArtwork(for track: MusicTrack) {
+    private func loadArtwork(for track: MusicTrack, videoID: String?) {
         artworkIdentity = track.identity
         artwork = nil
 
@@ -129,6 +207,10 @@ final class MusicController: ObservableObject {
                 else { return }
                 self.download(url, for: track)
             }
+
+        case .youtube:
+            guard let videoID, let url = YouTubeBridge.thumbnailURL(for: videoID) else { return }
+            download(url, for: track)
         }
     }
 

@@ -38,7 +38,9 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `ClaudeCode/ClaudeCodeMonitor.swift` | Tient l'état des sessions à jour. |
 | `ClaudeCode/ClaudeHooksInstaller.swift` | Écrit les hooks dans `~/.claude/settings.json`. |
 | `ClaudeCode/ClaudePanelView.swift` | La liste des sessions dans l'encoche. |
-| `Music/MusicApp.swift` | Apple Music et Spotify, et le test « déjà lancé ». |
+| `Music/MusicApp.swift` | Les trois sources, et leur disponibilité. |
+| `Music/Browser.swift` | Les navigateurs pilotables, Safari et la famille Chromium. |
+| `Music/YouTubeBridge.swift` | Lit et commande une vidéo dans un onglet. |
 | `Music/MusicScripts.swift` | Les scripts AppleScript. |
 | `Music/AppleScriptRunner.swift` | Exécution hors du fil principal. |
 | `Music/MusicController.swift` | Sondage, pochettes et commandes. |
@@ -135,8 +137,28 @@ Trois points à connaître :
    d'où le fichier `LedgeNotch.entitlements` dès maintenant.
 
 Apple Music fournit les octets de la pochette directement ; Spotify ne donne
-qu'une adresse, que l'app va chercher sur le réseau — le seul appel réseau de
-tout le projet.
+qu'une adresse, que l'app va chercher sur le réseau.
+
+### YouTube
+
+YouTube n'est pas une app mais un onglet, et se traite donc à part. Le pont
+fonctionne à deux niveaux, volontairement séparés :
+
+| Ce qu'on veut | Comment | Réglage nécessaire |
+| --- | --- | --- |
+| Titre | Titre de l'onglet | aucun |
+| Vignette | Identifiant lu dans l'adresse, image servie par YouTube | aucun |
+| État de lecture et commandes | JavaScript injecté dans la page | **oui** |
+
+Les navigateurs refusent par défaut d'exécuter du JavaScript venu d'une autre
+app. Le réglage existe — Affichage → Développeur dans Chrome, Développement
+dans Safari — mais il est masqué et l'utilisateur doit l'activer lui-même.
+D'où cette séparation : on affiche ce qu'on peut sans rien demander, et on
+n'exige un réglage que pour ce qui l'impose vraiment.
+
+Les onglets sont lus en deux requêtes plutôt qu'un par un : chaque accès à une
+propriété est un événement Apple, et une fenêtre de cinquante onglets rendrait
+le sondage interminable.
 
 ## Feuille de route
 
@@ -144,7 +166,7 @@ tout le projet.
 - [x] Réglages : ouverture au survol, dépassement, retour haptique
 - [x] Claude Code : état des sessions, pastille ambiante, alerte
 - [ ] Étagère à fichiers (glisser-déposer)
-- [x] Lecteur média — Apple Music et Spotify par AppleScript
+- [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via
       [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter)
 - [ ] Réglages : écran cible, lancement au démarrage
