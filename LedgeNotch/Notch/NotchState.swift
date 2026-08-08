@@ -31,7 +31,7 @@ final class NotchState: ObservableObject {
     var currentSize: CGSize {
         switch phase {
         case .closed: return metrics.closedSize(withSlots: sideContent)
-        case .peek: return metrics.peekSize
+        case .peek: return metrics.peekSize(withSlots: sideContent)
         case .open: return metrics.openSize
         }
     }

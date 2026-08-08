@@ -11,6 +11,19 @@ enum DebugOptions {
         ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_OPEN"] == "1"
     }
 
+    /// `LEDGENOTCH_FORCE_PHASE=peek` fige l'encoche dans un état donné.
+    ///
+    /// Le survol est le seul état qu'on ne peut pas observer tranquillement :
+    /// il disparaît dès qu'on éloigne le curseur pour regarder le résultat.
+    static var forcedPhase: NotchState.Phase? {
+        switch ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_PHASE"] {
+        case "peek": return .peek
+        case "open": return .open
+        case "closed": return .closed
+        default: return nil
+        }
+    }
+
     /// `LEDGENOTCH_FORCE_PANEL=claude` choisit l'onglet affiché au lancement.
     static var forcedPanel: NotchState.Panel? {
         switch ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_PANEL"] {

@@ -54,8 +54,7 @@ struct NotchView: View {
     @ViewBuilder
     private var equalizerSlot: some View {
         if music.track != nil {
-            SoundBars(height: 13)
-                .opacity(music.isPlaying ? 1 : 0.3)
+            EqualizerButton(isPlaying: music.isPlaying, action: music.playPause)
         }
     }
 

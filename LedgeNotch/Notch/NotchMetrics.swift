@@ -7,8 +7,8 @@ import Foundation
 /// 120 fois par seconde produit des à-coups ; animer une forme dedans, non.
 struct NotchMetrics {
     let closedSize: CGSize
-    let peekSize: CGSize
     let openSize: CGSize
+    let peekAmount: CGFloat
 
     /// Marge ajoutée autour de la taille ouverte pour laisser respirer l'ombre
     /// et les coins rentrants, qui débordent de la forme.
@@ -19,13 +19,23 @@ struct NotchMetrics {
     ///   qu'en largeur descendrait trop bas sur la barre de menus.
     init(closedSize: CGSize, peekAmount: Double = 30) {
         self.closedSize = closedSize
-        self.peekSize = CGSize(
-            width: closedSize.width + peekAmount,
-            height: closedSize.height + peekAmount / 3
-        )
+        self.peekAmount = peekAmount
         self.openSize = CGSize(
             width: max(closedSize.width * 2.1, 420),
             height: 190
+        )
+    }
+
+    /// L'encoche au survol, qui conserve ses compartiments.
+    ///
+    /// Sans cette conservation, s'approcher de l'égaliseur pour le cliquer le
+    /// ferait disparaître : le survol rétrécirait l'encoche à sa largeur nue
+    /// juste avant que le curseur n'arrive dessus.
+    func peekSize(withSlots slots: Bool) -> CGSize {
+        let base = closedSize(withSlots: slots)
+        return CGSize(
+            width: base.width + peekAmount,
+            height: closedSize.height + peekAmount / 3
         )
     }
 

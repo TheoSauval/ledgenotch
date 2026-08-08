@@ -47,8 +47,8 @@ final class NotchController {
             state.panel = panel
         }
 
-        if DebugOptions.forceOpen {
-            state.phase = .open
+        if let phase = DebugOptions.forcedPhase ?? (DebugOptions.forceOpen ? .open : nil) {
+            state.phase = phase
             return
         }
 
@@ -181,7 +181,7 @@ final class NotchController {
         let size: CGSize
         switch phase {
         case .closed: size = state.metrics.closedSize(withSlots: state.sideContent)
-        case .peek: size = state.metrics.peekSize
+        case .peek: size = state.metrics.peekSize(withSlots: state.sideContent)
         case .open: size = state.metrics.openSize
         }
         return CGRect(
@@ -189,6 +189,20 @@ final class NotchController {
             y: geometry.screen.frame.maxY - size.height,
             width: size.width,
             height: size.height
+        )
+    }
+
+    /// Le compartiment droit de l'encoche repliée, qui fait office de bouton
+    /// lecture/pause. Tout le reste de l'encoche ouvre le panneau.
+    private var equalizerRect: CGRect {
+        guard state.sideContent, !state.isOpen, music.track != nil else { return .zero }
+        let shape = rect(for: state.phase)
+        let width = state.metrics.sideSlotWidth
+        return CGRect(
+            x: shape.maxX - width,
+            y: shape.minY,
+            width: width,
+            height: shape.height
         )
     }
 
@@ -235,6 +249,9 @@ final class NotchController {
         case .closed:
             break
         case .peek:
+            // L'égaliseur est un bouton : ce clic revient à SwiftUI, et ouvrir
+            // le panneau en même temps serait déroutant.
+            guard !equalizerRect.contains(point) else { return }
             guard rect(for: .peek).contains(point) else { return }
             setPhase(.open)
             Haptics.open()
@@ -289,7 +306,10 @@ final class NotchController {
     /// chose à cliquer. Partout ailleurs il recouvre la barre de menus, et
     /// l'utilisateur doit pouvoir atteindre l'horloge à travers.
     private func updateMousePassthrough(at point: CGPoint) {
-        let interactive = state.isOpen && rect(for: .open).contains(point)
+        // L'égaliseur doit consommer son clic, sinon celui-ci traverserait
+        // jusqu'à la barre de menus en dessous en plus de basculer la lecture.
+        let interactive = (state.isOpen && rect(for: .open).contains(point))
+            || equalizerRect.contains(point)
         panel?.ignoresMouseEvents = !interactive
     }
 

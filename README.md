@@ -85,6 +85,7 @@ Edit Scheme → Run → Arguments :
 | Variable | Effet |
 | --- | --- |
 | `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
+| `LEDGENOTCH_FORCE_PHASE=peek` | Fige l'encoche dans un état : `closed`, `peek` ou `open`. Le survol est le seul qu'on ne peut pas observer autrement — il disparaît dès qu'on éloigne le curseur pour regarder. |
 | `LEDGENOTCH_FORCE_PANEL=claude` | Choisit l'onglet affiché au lancement : `home`, `music` ou `claude`. |
 | `LEDGENOTCH_OPEN_SETTINGS=1` | Ouvre la fenêtre de réglages au lancement. |
 | `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
