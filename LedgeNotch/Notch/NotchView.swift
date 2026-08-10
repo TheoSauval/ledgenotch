@@ -6,6 +6,7 @@ struct NotchView: View {
     @ObservedObject var music: MusicController
     @ObservedObject var calendar: CalendarService
     @ObservedObject var mirror: MirrorSession
+    @ObservedObject var weather: WeatherService
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -101,6 +102,8 @@ struct NotchView: View {
                 switch state.panel {
                 case .home:
                     HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
+                case .weather:
+                    WeatherPanelView(weather: weather)
                 case .claude:
                     ClaudePanelView(monitor: monitor)
                 }
@@ -125,6 +128,18 @@ struct NotchView: View {
             } icon: {
                 Image(systemName: "square.grid.2x2.fill")
                     .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
+            NotchTab(
+                title: "Météo",
+                isSelected: state.panel == .weather,
+                badge: nil
+            ) {
+                state.panel = .weather
+            } icon: {
+                Image(systemName: weather.report?.symbolName ?? "cloud.sun.fill")
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
             }
 

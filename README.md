@@ -48,6 +48,8 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Dashboard/HomeDashboardView.swift` | Les trois colonnes de la vue par défaut. |
 | `Dashboard/MirrorView.swift` | L'aperçu caméra, qui ne démarre que sur un clic. |
 | `Dashboard/CalendarService.swift` | Les rendez-vous du jour, via EventKit. |
+| `Dashboard/WeatherService.swift` | La météo, via Open-Meteo. |
+| `Dashboard/WeatherPanelView.swift` | La page météo et ses prochaines heures. |
 | `Dashboard/SystemLocale.swift` | La langue du Mac, et non celle de l'app. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
@@ -197,12 +199,26 @@ que le paquet déclare prendre en charge. LedgeNotch n'en déclare aucune, et le
 dates s'affichaient donc en anglais sur un système en français. D'où
 `Locale.system`, qui lit `preferredLanguages` et échappe à cette limite.
 
+## Météo
+
+Les relevés viennent d'**Open-Meteo** : ni clé, ni inscription, ni compte.
+WeatherKit d'Apple supposerait l'adhésion à l'Apple Developer Program, que ce
+projet a justement choisi de ne pas payer pour l'instant.
+
+La position vient de CoreLocation, sur demande explicite. Une ville saisie dans
+les réglages la remplace, pour qui préfère ne pas activer la localisation.
+
+Piège à connaître : `convertFromSnakeCase` trébuche sur les chiffres.
+`temperature_2m` ne devient pas `temperature2m`, et le décodage échoue sans
+autre signe qu'une colonne vide. Les clés sont donc déclarées à la main.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
 - [x] Réglages : ouverture au survol, dépassement, retour haptique
 - [x] Claude Code : état des sessions, pastille ambiante, alerte
 - [x] Tableau de bord : musique, miroir, calendrier
+- [x] Page météo : relevé courant et prochaines heures
 - [ ] Étagère à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via

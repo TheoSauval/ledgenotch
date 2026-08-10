@@ -64,6 +64,13 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Météo") {
+                TextField("Ville", text: $preferences.weatherCity, prompt: Text("Ma position"))
+                Text("Laissez vide pour utiliser votre position. Indiquez une ville si vous préférez ne pas activer la localisation — les relevés viennent d'Open-Meteo, sans clé ni compte.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Claude Code") {
                 HStack {
                     Image(systemName: hooksInstalled

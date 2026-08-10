@@ -16,6 +16,7 @@ final class Preferences: ObservableObject {
         static let peekAmount = "peekAmount"
         static let alertOnClaudeEvents = "alertOnClaudeEvents"
         static let musicSource = "musicSource"
+        static let weatherCity = "weatherCity"
     }
 
     /// Ouvrir l'encoche au simple survol, sans attendre le clic.
@@ -43,6 +44,12 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(musicSource?.rawValue, forKey: Key.musicSource) }
     }
 
+    /// Ville imposée pour la météo. Vide, c'est la localisation qui décide —
+    /// mais elle peut être refusée, et la colonne serait alors inutilisable.
+    @Published var weatherCity: String {
+        didSet { defaults.set(weatherCity, forKey: Key.weatherCity) }
+    }
+
     static let peekRange: ClosedRange<Double> = 0...80
 
     private let defaults: UserDefaults
@@ -60,6 +67,7 @@ final class Preferences: ObservableObject {
         peekAmount = defaults.double(forKey: Key.peekAmount)
         alertOnClaudeEvents = defaults.bool(forKey: Key.alertOnClaudeEvents)
         musicSource = defaults.string(forKey: Key.musicSource).flatMap(MusicApp.init(rawValue:))
+        weatherCity = defaults.string(forKey: Key.weatherCity) ?? ""
     }
 
     func resetToDefaults() {
@@ -68,5 +76,6 @@ final class Preferences: ObservableObject {
         peekAmount = 30
         alertOnClaudeEvents = true
         musicSource = nil
+        weatherCity = ""
     }
 }
