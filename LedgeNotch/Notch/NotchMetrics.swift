@@ -24,7 +24,9 @@ struct NotchMetrics {
         // En dessous de 660 points, la semaine du calendrier ne tient plus.
         self.openSize = CGSize(
             width: max(closedSize.width * 3.9, 720),
-            height: 178
+            // 178 points de contenu, plus la bande d'en-tête qui longe le
+            // boîtier caméra.
+            height: 178 + closedSize.height
         )
     }
 
@@ -40,6 +42,11 @@ struct NotchMetrics {
             height: closedSize.height + peekAmount / 3
         )
     }
+
+    /// Hauteur de la bande d'en-tête de l'encoche ouverte, calée sur celle du
+    /// boîtier caméra. Le contenu commence en dessous, sinon il longerait un
+    /// endroit où il n'y a pas d'écran.
+    var headerHeight: CGFloat { closedSize.height }
 
     /// Largeur d'un compartiment latéral, de part et d'autre du boîtier caméra.
     ///

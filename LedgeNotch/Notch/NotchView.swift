@@ -94,55 +94,51 @@ struct NotchView: View {
 
     private var openContent: some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            switch state.panel {
-            case .home:
-                HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
-            case .claude:
-                ClaudePanelView(monitor: monitor)
+            header
+
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                switch state.panel {
+                case .home:
+                    HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
+                case .claude:
+                    ClaudePanelView(monitor: monitor)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
-        }
-        .padding(.top, topInset)
-        // Sans cette extension, la barre d'icônes se calerait sur la largeur
-        // naturelle du contenu au lieu du bord de l'encoche.
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topTrailing) { toolbar }
-    }
-
-    /// Seule la liste des sessions a besoin de s'écarter du haut : ses lignes
-    /// s'étendent jusqu'au bord droit et passeraient sous la barre d'icônes.
-    /// Les autres panneaux se centrent sur toute la hauteur, sans quoi ils
-    /// paraissent posés trop bas.
-    private var topInset: CGFloat {
-        state.panel == .claude ? 24 : 0
-    }
-
-    private var homePanel: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "tray.full")
-                .font(.system(size: 28, weight: .light))
-                .foregroundStyle(.white.opacity(0.85))
-            Text("LedgeNotch")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-            Text("L'étagère à fichiers arrive ici.")
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.45))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    private var toolbar: some View {
-        HStack(spacing: 2) {
-            NotchIconButton(
-                isSelected: state.panel == .claude,
-                badge: monitor.overall?.color,
-                help: "Sessions Claude Code"
+    /// La bande qui longe le boîtier caméra, et sous laquelle commence le contenu.
+    ///
+    /// Son centre n'est pas affiché — c'est le boîtier — d'où les onglets calés
+    /// à gauche et l'engrenage à droite, sans rien entre les deux.
+    private var header: some View {
+        HStack(spacing: 5) {
+            NotchTab(
+                title: "Accueil",
+                isSelected: state.panel == .home,
+                badge: nil
             ) {
-                state.panel = state.panel == .claude ? .home : .claude
+                state.panel = .home
             } icon: {
-                ClaudeCodeMark(width: 16)
+                Image(systemName: "square.grid.2x2.fill")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.white)
             }
+
+            NotchTab(
+                title: "Claude",
+                isSelected: state.panel == .claude,
+                badge: monitor.overall?.color
+            ) {
+                state.panel = .claude
+            } icon: {
+                ClaudeCodeMark(width: 14)
+            }
+
+            Spacer(minLength: 0)
 
             NotchIconButton(
                 isSelected: false,
@@ -155,8 +151,8 @@ struct NotchView: View {
                     .foregroundStyle(.white)
             }
         }
-        .padding(.top, 5)
-        .padding(.trailing, 10)
+        .padding(.horizontal, 12)
+        .frame(height: state.metrics.headerHeight)
     }
 
     // MARK: - Style
@@ -190,6 +186,48 @@ struct NotchView: View {
         state.isOpen
             ? .spring(response: 0.34, dampingFraction: 0.72)
             : .spring(response: 0.22, dampingFraction: 0.85)
+    }
+}
+
+/// Onglet de l'en-tête : une pastille pleine quand il est actif, un simple
+/// libellé estompé sinon.
+private struct NotchTab<Icon: View>: View {
+    let title: String
+    let isSelected: Bool
+    let badge: Color?
+    let action: () -> Void
+    @ViewBuilder let icon: () -> Icon
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                icon()
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .opacity(isSelected ? 1 : (isHovering ? 0.85 : 0.45))
+            .padding(.horizontal, 9)
+            .padding(.vertical, 5)
+            .background(
+                Capsule().fill(.white.opacity(isSelected ? 0.14 : (isHovering ? 0.07 : 0)))
+            )
+            .overlay(alignment: .topTrailing) {
+                if let badge {
+                    Circle()
+                        .fill(badge)
+                        .frame(width: 5, height: 5)
+                        .offset(x: 1, y: 1)
+                }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: isHovering)
+        .animation(.easeOut(duration: 0.18), value: isSelected)
     }
 }
 

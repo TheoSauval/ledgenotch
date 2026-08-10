@@ -179,6 +179,10 @@ miroir, calendrier. Un tableau de bord plutôt qu'un onglet à choisir —
 l'encoche s'ouvre une seconde, le temps d'un coup d'œil, et obliger à cliquer
 avant de voir quoi que ce soit annulerait tout l'intérêt.
 
+Une bande d'en-tête longe le boîtier caméra et porte les onglets à gauche,
+l'engrenage à droite. Rien au centre : c'est là que se trouve le boîtier, et
+tout ce qu'on y placerait serait invisible. Le contenu commence en dessous.
+
 Deux règles s'y appliquent :
 
 - **La caméra ne démarre que sur un clic.** L'allumer à l'ouverture ferait
