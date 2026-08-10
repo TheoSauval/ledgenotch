@@ -16,6 +16,7 @@ final class NotchState: ObservableObject {
     enum Panel {
         case home
         case weather
+        case translate
         case claude
     }
 

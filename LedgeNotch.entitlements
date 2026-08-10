@@ -11,6 +11,9 @@
 	<!-- Le miroir, qui ne démarre que sur un clic. -->
 	<key>com.apple.security.device.camera</key>
 	<true/>
+	<!-- La transcription vocale, qui ne démarre que sur un clic. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
 	<!-- Le prochain rendez-vous affiché dans le tableau de bord. -->
 	<key>com.apple.security.personal-information.calendars</key>
 	<true/>

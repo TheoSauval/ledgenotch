@@ -29,9 +29,16 @@ enum DebugOptions {
         switch ProcessInfo.processInfo.environment["LEDGENOTCH_FORCE_PANEL"] {
         case "claude": return .claude
         case "weather": return .weather
+        case "translate": return .translate
         case "home": return .home
         default: return nil
         }
+    }
+
+    /// `LEDGENOTCH_SAMPLE_SPEECH="Bonjour"` remplit la transcription au
+    /// lancement, pour éprouver la traduction sans parler dans le micro.
+    static var sampleSpeech: String? {
+        ProcessInfo.processInfo.environment["LEDGENOTCH_SAMPLE_SPEECH"]
     }
 
     /// `LEDGENOTCH_OPEN_SETTINGS=1` ouvre la fenêtre de réglages au lancement,

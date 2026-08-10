@@ -183,6 +183,8 @@
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "LedgeNotch affiche votre prochain rendez-vous dans l'encoche.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "LedgeNotch affiche la m\u00e9t\u00e9o de votre position dans l'encoche.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "LedgeNotch affiche la m\u00e9t\u00e9o de votre position dans l'encoche.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LedgeNotch \u00e9coute le micro pour transcrire et traduire, uniquement quand vous l'activez.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "LedgeNotch transcrit la parole en texte pour la traduire dans l'encoche.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "LedgeNotch affiche un miroir dans l'encoche, uniquement quand vous l'activez.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "LedgeNotch pilote Apple Music et Spotify pour afficher et commander la lecture depuis l'encoche.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -212,6 +214,8 @@
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "LedgeNotch affiche votre prochain rendez-vous dans l'encoche.";
 				INFOPLIST_KEY_NSLocationUsageDescription = "LedgeNotch affiche la m\u00e9t\u00e9o de votre position dans l'encoche.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "LedgeNotch affiche la m\u00e9t\u00e9o de votre position dans l'encoche.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "LedgeNotch \u00e9coute le micro pour transcrire et traduire, uniquement quand vous l'activez.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "LedgeNotch transcrit la parole en texte pour la traduire dans l'encoche.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "LedgeNotch affiche un miroir dans l'encoche, uniquement quand vous l'activez.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "LedgeNotch pilote Apple Music et Spotify pour afficher et commander la lecture depuis l'encoche.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";

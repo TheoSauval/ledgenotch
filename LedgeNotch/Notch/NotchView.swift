@@ -7,6 +7,7 @@ struct NotchView: View {
     @ObservedObject var calendar: CalendarService
     @ObservedObject var mirror: MirrorSession
     @ObservedObject var weather: WeatherService
+    @ObservedObject var listener: SpeechListener
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -104,6 +105,8 @@ struct NotchView: View {
                     HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
                 case .weather:
                     WeatherPanelView(weather: weather)
+                case .translate:
+                    TranslatePanelView(listener: listener)
                 case .claude:
                     ClaudePanelView(monitor: monitor)
                 }
@@ -140,6 +143,18 @@ struct NotchView: View {
             } icon: {
                 Image(systemName: weather.report?.symbolName ?? "cloud.sun.fill")
                     .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
+            NotchTab(
+                title: "Traduction",
+                isSelected: state.panel == .translate,
+                badge: listener.isListening ? .red : nil
+            ) {
+                state.panel = .translate
+            } icon: {
+                Image(systemName: "character.bubble.fill")
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.white)
             }
 

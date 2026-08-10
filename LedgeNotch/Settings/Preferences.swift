@@ -17,6 +17,8 @@ final class Preferences: ObservableObject {
         static let alertOnClaudeEvents = "alertOnClaudeEvents"
         static let musicSource = "musicSource"
         static let weatherCity = "weatherCity"
+        static let speechSource = "speechSource"
+        static let speechTarget = "speechTarget"
     }
 
     /// Ouvrir l'encoche au simple survol, sans attendre le clic.
@@ -50,6 +52,15 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(weatherCity, forKey: Key.weatherCity) }
     }
 
+    /// Langue écoutée, et langue vers laquelle traduire.
+    @Published var speechSource: TranslationLanguage {
+        didSet { defaults.set(speechSource.rawValue, forKey: Key.speechSource) }
+    }
+
+    @Published var speechTarget: TranslationLanguage {
+        didSet { defaults.set(speechTarget.rawValue, forKey: Key.speechTarget) }
+    }
+
     static let peekRange: ClosedRange<Double> = 0...80
 
     private let defaults: UserDefaults
@@ -68,6 +79,10 @@ final class Preferences: ObservableObject {
         alertOnClaudeEvents = defaults.bool(forKey: Key.alertOnClaudeEvents)
         musicSource = defaults.string(forKey: Key.musicSource).flatMap(MusicApp.init(rawValue:))
         weatherCity = defaults.string(forKey: Key.weatherCity) ?? ""
+        speechSource = defaults.string(forKey: Key.speechSource)
+            .flatMap(TranslationLanguage.init(rawValue:)) ?? .french
+        speechTarget = defaults.string(forKey: Key.speechTarget)
+            .flatMap(TranslationLanguage.init(rawValue:)) ?? .english
     }
 
     func resetToDefaults() {
@@ -77,5 +92,7 @@ final class Preferences: ObservableObject {
         alertOnClaudeEvents = true
         musicSource = nil
         weatherCity = ""
+        speechSource = .french
+        speechTarget = .english
     }
 }

@@ -18,6 +18,7 @@ final class NotchController {
     private let calendar = CalendarService()
     private let mirror = MirrorSession()
     private let weather = WeatherService()
+    private let listener = SpeechListener()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -47,6 +48,10 @@ final class NotchController {
             object: nil
         )
 
+        if let phrase = DebugOptions.sampleSpeech {
+            listener.preload(phrase)
+        }
+
         if let panel = DebugOptions.forcedPanel {
             state.panel = panel
         }
@@ -71,6 +76,7 @@ final class NotchController {
         claude.stop()
         music.stop()
         weather.stop()
+        listener.stop()
         pendingClose?.cancel()
         cancellables.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -106,7 +112,8 @@ final class NotchController {
             music: music,
             calendar: calendar,
             mirror: mirror,
-            weather: weather
+            weather: weather,
+            listener: listener
         ) { [weak self] in
             self?.openSettings()
         }

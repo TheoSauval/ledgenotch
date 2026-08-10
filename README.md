@@ -51,6 +51,9 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Dashboard/WeatherService.swift` | La météo, via Open-Meteo. |
 | `Dashboard/WeatherPanelView.swift` | La page météo et ses prochaines heures. |
 | `Dashboard/SystemLocale.swift` | La langue du Mac, et non celle de l'app. |
+| `Translate/SpeechListener.swift` | La transcription du micro, en direct. |
+| `Translate/TranslatePanelView.swift` | La page traduction et ses deux colonnes. |
+| `Translate/TranslationLanguage.swift` | Les langues proposées. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -215,6 +218,28 @@ Piège à connaître : `convertFromSnakeCase` trébuche sur les chiffres.
 `temperature_2m` ne devient pas `temperature2m`, et le décodage échoue sans
 autre signe qu'une colonne vide. Les clés sont donc déclarées à la main.
 
+## Traduction
+
+Tout se passe sur la machine : `Speech` transcrit le micro, `Translation`
+traduit. Rien ne part sur un serveur, et l'ensemble fonctionne sans réseau une
+fois les modèles de langue installés par le système.
+
+Le micro ne s'ouvre que sur un clic, comme la caméra du miroir : une app qui
+écoute dès qu'on effleure le haut de l'écran serait inacceptable.
+
+Deux détails qui n'allaient pas de soi :
+
+- **Une tâche de reconnaissance s'arrête d'elle-même au bout d'une minute.**
+  Sans relance automatique, l'écoute cesserait en pleine phrase. Ce qui est
+  déjà transcrit est conservé à part, sinon la relance effacerait tout.
+- **La transcription change à chaque mot.** Traduire à chaque syllabe
+  saturerait le moteur pour un résultat qu'on n'aurait pas le temps de lire :
+  la traduction attend six dixièmes de seconde de silence.
+
+`TranslationSession` n'existe qu'à partir de macOS 15, et une propriété stockée
+ne se déclare pas sous condition de version : la colonne traduite vit donc dans
+sa propre vue annotée, ce qui garde le reste compatible avec macOS 14.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
@@ -222,6 +247,7 @@ autre signe qu'une colonne vide. Les clés sont donc déclarées à la main.
 - [x] Claude Code : état des sessions, pastille ambiante, alerte
 - [x] Tableau de bord : musique, miroir, calendrier
 - [x] Page météo : relevé courant et prochaines heures
+- [x] Page traduction : transcription du micro et traduction locale
 - [ ] Étagère à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via
