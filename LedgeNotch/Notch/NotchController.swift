@@ -15,6 +15,8 @@ final class NotchController {
     private let preferences = Preferences.shared
     private let claude = ClaudeCodeMonitor()
     private let music = MusicController()
+    private let calendar = CalendarService()
+    private let mirror = MirrorSession()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -95,7 +97,13 @@ final class NotchController {
 
     private func makePanel() -> NotchPanel {
         let panel = NotchPanel(contentRect: .zero)
-        let view = NotchView(state: state, monitor: claude, music: music) { [weak self] in
+        let view = NotchView(
+            state: state,
+            monitor: claude,
+            music: music,
+            calendar: calendar,
+            mirror: mirror
+        ) { [weak self] in
             self?.openSettings()
         }
         let hosting = NotchHostingView(rootView: view)

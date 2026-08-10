@@ -4,6 +4,8 @@ struct NotchView: View {
     @ObservedObject var state: NotchState
     @ObservedObject var monitor: ClaudeCodeMonitor
     @ObservedObject var music: MusicController
+    @ObservedObject var calendar: CalendarService
+    @ObservedObject var mirror: MirrorSession
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -94,9 +96,10 @@ struct NotchView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
             switch state.panel {
-            case .home: homePanel
-            case .music: MusicPanelView(music: music)
-            case .claude: ClaudePanelView(monitor: monitor)
+            case .home:
+                HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
+            case .claude:
+                ClaudePanelView(monitor: monitor)
             }
             Spacer(minLength: 0)
         }
@@ -131,19 +134,6 @@ struct NotchView: View {
 
     private var toolbar: some View {
         HStack(spacing: 2) {
-            NotchIconButton(
-                isSelected: state.panel == .music,
-                badge: music.isPlaying ? .white.opacity(0.7) : nil,
-                help: "Lecture en cours"
-            ) {
-                state.panel = state.panel == .music ? .home : .music
-                music.refresh()
-            } icon: {
-                Image(systemName: "music.note")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-
             NotchIconButton(
                 isSelected: state.panel == .claude,
                 badge: monitor.overall?.color,

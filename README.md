@@ -44,8 +44,11 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Music/MusicScripts.swift` | Les scripts AppleScript. |
 | `Music/AppleScriptRunner.swift` | Exécution hors du fil principal. |
 | `Music/MusicController.swift` | Sondage, pochettes et commandes. |
-| `Music/MusicPanelView.swift` | Le lecteur dans l'encoche. |
 | `Music/SoundBars.swift` | L'égaliseur animé de l'encoche repliée. |
+| `Dashboard/HomeDashboardView.swift` | Les trois colonnes de la vue par défaut. |
+| `Dashboard/MirrorView.swift` | L'aperçu caméra, qui ne démarre que sur un clic. |
+| `Dashboard/CalendarService.swift` | Les rendez-vous du jour, via EventKit. |
+| `Dashboard/SystemLocale.swift` | La langue du Mac, et non celle de l'app. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -169,11 +172,33 @@ Les onglets sont lus en deux requêtes plutôt qu'un par un : chaque accès à u
 propriété est un événement Apple, et une fenêtre de cinquante onglets rendrait
 le sondage interminable.
 
+## Tableau de bord
+
+La vue par défaut de l'encoche ouverte tient en trois colonnes : musique,
+miroir, calendrier. Un tableau de bord plutôt qu'un onglet à choisir —
+l'encoche s'ouvre une seconde, le temps d'un coup d'œil, et obliger à cliquer
+avant de voir quoi que ce soit annulerait tout l'intérêt.
+
+Deux règles s'y appliquent :
+
+- **La caméra ne démarre que sur un clic.** L'allumer à l'ouverture ferait
+  clignoter la diode verte à chaque passage de souris en haut de l'écran, de
+  quoi croire à une app qui espionne.
+- **L'autorisation du calendrier n'est jamais demandée d'office.** Une alerte
+  système qui surgit parce qu'on a effleuré l'encoche serait déplacée : c'est
+  le bouton de la colonne qui la déclenche.
+
+Attention au piège de la langue : `Locale.current` est bornée par les langues
+que le paquet déclare prendre en charge. LedgeNotch n'en déclare aucune, et les
+dates s'affichaient donc en anglais sur un système en français. D'où
+`Locale.system`, qui lit `preferredLanguages` et échappe à cette limite.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
 - [x] Réglages : ouverture au survol, dépassement, retour haptique
 - [x] Claude Code : état des sessions, pastille ambiante, alerte
+- [x] Tableau de bord : musique, miroir, calendrier
 - [ ] Étagère à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via

@@ -180,6 +180,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "LedgeNotch affiche votre prochain rendez-vous dans l'encoche.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "LedgeNotch affiche un miroir dans l'encoche, uniquement quand vous l'activez.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "LedgeNotch pilote Apple Music et Spotify pour afficher et commander la lecture depuis l'encoche.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -205,6 +207,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "LedgeNotch affiche votre prochain rendez-vous dans l'encoche.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "LedgeNotch affiche un miroir dans l'encoche, uniquement quand vous l'activez.";
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "LedgeNotch pilote Apple Music et Spotify pour afficher et commander la lecture depuis l'encoche.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (

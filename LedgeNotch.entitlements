@@ -8,5 +8,11 @@
 	     le runtime durci et masque le problème jusqu'au jour de la distribution. -->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
+	<!-- Le miroir, qui ne démarre que sur un clic. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+	<!-- Le prochain rendez-vous affiché dans le tableau de bord. -->
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
 </dict>
 </plist>

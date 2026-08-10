@@ -20,9 +20,11 @@ struct NotchMetrics {
     init(closedSize: CGSize, peekAmount: Double = 30) {
         self.closedSize = closedSize
         self.peekAmount = peekAmount
+        // Trois colonnes — musique, miroir, calendrier — demandent de la largeur.
+        // En dessous de 660 points, la semaine du calendrier ne tient plus.
         self.openSize = CGSize(
-            width: max(closedSize.width * 2.1, 420),
-            height: 190
+            width: max(closedSize.width * 3.9, 720),
+            height: 178
         )
     }
 
