@@ -208,6 +208,9 @@ projet a justement choisi de ne pas payer pour l'instant.
 La position vient de CoreLocation, sur demande explicite. Une ville saisie dans
 les réglages la remplace, pour qui préfère ne pas activer la localisation.
 
+La bande horaire couvre deux jours et défile au trackpad. Son bord droit
+s'estompe : une bande coupée net ne dirait pas qu'il reste des heures au-delà.
+
 Piège à connaître : `convertFromSnakeCase` trébuche sur les chiffres.
 `temperature_2m` ne devient pas `temperature2m`, et le décodage échoue sans
 autre signe qu'une colonne vide. Les clés sont donc déclarées à la main.

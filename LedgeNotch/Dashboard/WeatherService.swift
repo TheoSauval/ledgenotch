@@ -143,7 +143,7 @@ final class WeatherService: NSObject, ObservableObject {
             + "?latitude=\(latitude)&longitude=\(longitude)"
             + "&current=temperature_2m,weather_code,is_day"
             + "&daily=temperature_2m_max,temperature_2m_min"
-            + "&hourly=temperature_2m,weather_code&forecast_hours=12"
+            + "&hourly=temperature_2m,weather_code&forecast_hours=48"
             + "&timezone=auto&forecast_days=1"
         ) else { return }
 
@@ -165,8 +165,9 @@ final class WeatherService: NSObject, ObservableObject {
         }
     }
 
-    /// Les créneaux passés de l'heure en cours n'ont plus d'intérêt : Open-Meteo
-    /// renvoie la journée entière, on ne garde que ce qui vient.
+    /// Deux jours de créneaux, dont on écarte ceux déjà passés. La bande
+    /// horaire de la page défile : mieux vaut avoir de la matière à faire
+    /// glisser que de s'arrêter net au bout de sept heures.
     private static func hours(from response: ForecastResponse) -> [WeatherHour] {
         guard let hourly = response.hourly else { return [] }
 
@@ -180,7 +181,6 @@ final class WeatherService: NSObject, ObservableObject {
                 guard let date = formatter.date(from: pair.0), date > start else { return nil }
                 return WeatherHour(date: date, temperature: pair.1, code: code)
             }
-            .prefix(7)
             .map { $0 }
     }
 

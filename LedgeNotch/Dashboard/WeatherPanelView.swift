@@ -23,16 +23,33 @@ struct WeatherPanelView: View {
             if !report.hours.isEmpty {
                 Divider().overlay(.white.opacity(0.09)).frame(height: 88)
 
-                HStack(spacing: 16) {
-                    ForEach(report.hours) { hour in
-                        HourCell(hour: hour, isDay: report.isDay)
+                // Deux jours de prévisions dans la largeur d'une encoche : la
+                // bande défile au trackpad, deux doigts vers la gauche.
+                ScrollView(.horizontal) {
+                    HStack(spacing: 16) {
+                        ForEach(report.hours) { hour in
+                            HourCell(hour: hour)
+                        }
                     }
+                    .padding(.trailing, 8)
                 }
+                .scrollIndicators(.hidden)
+                // L'estompage du bord droit indique qu'il reste des heures
+                // au-delà, ce qu'une bande coupée net ne dirait pas.
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .black, location: 0),
+                            .init(color: .black, location: 0.92),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 26)
+        .padding(.leading, 26)
     }
 
     private func current(_ report: WeatherReport) -> some View {
@@ -111,13 +128,14 @@ struct WeatherPanelView: View {
 
 private struct HourCell: View {
     let hour: WeatherHour
-    let isDay: Bool
 
     var body: some View {
         VStack(spacing: 6) {
             Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.white.opacity(0.4))
+                .font(.system(size: 10, weight: isDayStart ? .bold : .medium))
+                .foregroundStyle(.white.opacity(isDayStart ? 0.65 : 0.4))
+                .lineLimit(1)
+                .fixedSize()
 
             Image(systemName: report.symbolName)
                 .font(.system(size: 15))
@@ -139,20 +157,32 @@ private struct HourCell: View {
             high: 0,
             low: 0,
             code: hour.code,
-            isDay: isDayAt(hour.date)
+            isDay: isDaylight
         )
     }
 
-    /// Le jour et la nuit ne sont pas fournis pour chaque heure : une règle
+    /// Le jour et la nuit ne sont pas fournis créneau par créneau : une règle
     /// simple suffit à choisir entre le soleil et la lune.
-    private func isDayAt(_ date: Date) -> Bool {
-        let hour = Calendar.current.component(.hour, from: date)
-        return hour >= 7 && hour < 21
+    private var isDaylight: Bool {
+        let value = Calendar.current.component(.hour, from: hour.date)
+        return value >= 7 && value < 21
+    }
+
+    /// Minuit marque le passage au lendemain : afficher « 00h » n'apprendrait
+    /// rien, le nom du jour situe la suite de la bande.
+    private var isDayStart: Bool {
+        Calendar.current.component(.hour, from: hour.date) == 0
     }
 
     private var label: String {
         let formatter = DateFormatter()
         formatter.locale = .system
+        if isDayStart {
+            formatter.dateFormat = "EEE"
+            return formatter.string(from: hour.date)
+                .replacingOccurrences(of: ".", with: "")
+                .capitalized
+        }
         formatter.dateFormat = "HH"
         return formatter.string(from: hour.date) + "h"
     }
