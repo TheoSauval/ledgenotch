@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var hooksInstalled = ClaudeHooksInstaller.isInstalled
     @State private var hooksError: String?
     @State private var players: [MusicApp] = MusicApp.available
+    @State private var importError: String?
 
     var body: some View {
         Form {
@@ -72,6 +73,24 @@ struct SettingsView: View {
             }
 
             Section("Prompteur") {
+                HStack {
+                    Button("Importer un document…") { importScript() }
+                    Spacer()
+                    if !preferences.prompterScript.isEmpty {
+                        Button("Effacer") { preferences.prompterScript = "" }
+                    }
+                }
+
+                Text("Word, RTF, PDF, OpenDocument, Markdown ou texte brut. Seul le texte est repris, la mise en forme est écartée.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                if let importError {
+                    Text(importError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
                 TextEditor(text: $preferences.prompterScript)
                     .font(.system(size: 12))
                     .frame(height: 90)
@@ -171,6 +190,17 @@ struct SettingsView: View {
             )
         ) { _ in
             refreshGeometry()
+        }
+    }
+
+    private func importScript() {
+        importError = nil
+        do {
+            if let text = try ScriptImporter.pick(), !text.isEmpty {
+                preferences.prompterScript = text
+            }
+        } catch {
+            importError = error.localizedDescription
         }
     }
 

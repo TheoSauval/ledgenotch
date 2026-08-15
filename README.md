@@ -58,6 +58,7 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `DeepWork/DeepWorkPanelView.swift` | La page concentration et sa pastille. |
 | `Prompter/PrompterEngine.swift` | Le découpage du texte et le recalage sur la voix. |
 | `Prompter/PrompterPanelView.swift` | La page prompteur. |
+| `Prompter/ScriptImporter.swift` | Lecture de Word, PDF, RTF et consorts. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -293,6 +294,16 @@ l'autre bout du texte.
 Les mots sont comparés sans accents, sans ponctuation et sans casse : la
 reconnaissance vocale écrit « ça » là où le texte dit « Ca », et « c'est » là
 où il dit « c'est, ».
+
+Le texte glisse par décalage plutôt que par `scrollTo`, qui saute d'une ligne à
+l'autre. Toutes les lignes ont la même hauteur — le découpage se fait à
+quarante-cinq caractères et `lineLimit(1)` interdit le débordement — ce qui rend
+le calcul du décalage exact et immédiat. Le moteur avance par fractions de mot,
+dix fois par seconde, et la vue interpole entre deux battements.
+
+Le script s'importe depuis Word, PDF, RTF, OpenDocument, Markdown ou texte brut.
+`NSAttributedString` lit nativement le format d'Office : aucune bibliothèque
+tierce n'est nécessaire pour ouvrir un `.docx`.
 
 Son onglet est le seul à droite du boîtier caméra. La rangée de gauche arrivait
 à saturation, et cet espace-là était inutilisé.

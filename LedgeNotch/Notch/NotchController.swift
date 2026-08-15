@@ -52,6 +52,10 @@ final class NotchController {
             object: nil
         )
 
+        if DebugOptions.scrollPrompter {
+            prompter.toggleAutoScroll()
+        }
+
         if DebugOptions.startDeepWork {
             deepWork.start()
         }

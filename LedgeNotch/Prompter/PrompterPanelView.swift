@@ -6,6 +6,7 @@ struct PrompterPanelView: View {
     @ObservedObject var listener: SpeechListener
     @ObservedObject private var preferences = Preferences.shared
 
+
     var body: some View {
         if engine.isEmpty {
             empty
@@ -22,33 +23,53 @@ struct PrompterPanelView: View {
 
     // MARK: - Texte
 
+    /// Le texte glisse par décalage plutôt que par `scrollTo` : ce dernier saute
+    /// d'une ligne à l'autre, alors qu'on veut un mouvement continu qui suive le
+    /// débit de la voix.
+    ///
+    /// Toutes les lignes ont la même hauteur, garantie par `lineLimit(1)` et un
+    /// découpage à quarante-cinq caractères. Mesurer chaque ligne aurait été
+    /// plus souple, mais le calcul du décalage devient ici exact et immédiat,
+    /// sans dépendre d'une remontée de mesures qui arrive après le premier tracé.
     private var script: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    // Une respiration au-dessus et en dessous : sans elle, la
-                    // première et la dernière ligne ne peuvent jamais se centrer.
-                    Color.clear.frame(height: 46)
-
-                    ForEach(engine.chunks) { chunk in
-                        Text(chunk.text)
-                            .font(.system(size: preferences.prompterFontSize, weight: weight(for: chunk)))
-                            .foregroundStyle(.white.opacity(opacity(for: chunk)))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(chunk.id)
-                    }
-
-                    Color.clear.frame(height: 46)
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: lineSpacing) {
+                ForEach(engine.chunks) { chunk in
+                    Text(chunk.text)
+                        .font(.system(size: preferences.prompterFontSize, weight: weight(for: chunk)))
+                        .foregroundStyle(.white.opacity(opacity(for: chunk)))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .frame(height: lineHeight, alignment: .leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .scrollIndicators(.hidden)
-            .onChange(of: engine.currentChunk) { _, index in
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    proxy.scrollTo(index, anchor: .center)
-                }
-            }
+            // La ligne en cours se tient au tiers supérieur : plus haut on perd
+            // ce qui vient d'être dit, plus bas on ne voit plus assez la suite.
+            .offset(y: geometry.size.height * 0.32 - travelled)
+            .animation(glide, value: travelled)
         }
+        .clipped()
         .frame(maxWidth: .infinity)
+    }
+
+    private var lineSpacing: CGFloat { 6 }
+    private var lineHeight: CGFloat { preferences.prompterFontSize * 1.45 }
+
+    /// Distance parcourue depuis le début du texte, ligne courante comprise au
+    /// prorata de ce qui en a déjà été lu.
+    private var travelled: CGFloat {
+        let step = lineHeight + lineSpacing
+        return (Double(engine.currentChunk) + engine.fractionWithinChunk) * step
+    }
+
+    /// Le défilement automatique avance par petits pas réguliers : une
+    /// interpolation linéaire de la durée d'un pas donne un mouvement continu.
+    /// Un recalage sur la voix, lui, est un saut : il mérite d'être amorti.
+    private var glide: Animation {
+        engine.isFollowingVoice
+            ? .easeOut(duration: 0.4)
+            : .linear(duration: PrompterEngine.tick)
     }
 
     /// La ligne en cours est pleine, celles d'avant s'effacent, celles d'après

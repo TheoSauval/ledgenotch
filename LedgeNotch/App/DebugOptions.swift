@@ -49,6 +49,12 @@ enum DebugOptions {
         ProcessInfo.processInfo.environment["LEDGENOTCH_DEEPWORK"] == "1"
     }
 
+    /// `LEDGENOTCH_PROMPTER_SCROLL=1` lance le défilement du prompteur au
+    /// démarrage, pour juger de sa fluidité sans avoir à cliquer.
+    static var scrollPrompter: Bool {
+        ProcessInfo.processInfo.environment["LEDGENOTCH_PROMPTER_SCROLL"] == "1"
+    }
+
     /// `LEDGENOTCH_OPEN_SETTINGS=1` ouvre la fenêtre de réglages au lancement,
     /// pour itérer dessus sans repasser par l'engrenage à chaque fois.
     static var openSettings: Bool {

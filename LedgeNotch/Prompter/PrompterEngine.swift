@@ -16,12 +16,17 @@ final class PrompterEngine: ObservableObject {
     }
 
     @Published private(set) var chunks: [Chunk] = []
-    @Published private(set) var currentChunk = 0
     @Published private(set) var isAutoScrolling = false
     @Published private(set) var isFollowingVoice = false
 
-    /// Rang du prochain mot attendu.
-    private var cursor = 0
+    /// Position dans le texte, en rang de mot — mais fractionnaire.
+    ///
+    /// Un entier ferait sauter le texte d'une ligne à l'autre. En avançant par
+    /// fractions de mot, le défilement devient continu et la vue n'a plus qu'à
+    /// interpoler entre deux lignes.
+    @Published private(set) var position: Double = 0
+
+    private var cursor: Int { Int(position) }
     private var words: [String] = []
     private var timer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -35,7 +40,23 @@ final class PrompterEngine: ObservableObject {
     var isEmpty: Bool { chunks.isEmpty }
     var progress: Double {
         guard !words.isEmpty else { return 0 }
-        return Double(cursor) / Double(words.count)
+        return min(1, position / Double(words.count))
+    }
+
+    /// La ligne en cours, et l'avancement à l'intérieur de celle-ci.
+    var currentChunk: Int {
+        chunks.lastIndex { Double($0.firstWord) <= position } ?? 0
+    }
+
+    var fractionWithinChunk: Double {
+        guard currentChunk < chunks.count else { return 0 }
+        let chunk = chunks[currentChunk]
+        let next = currentChunk + 1 < chunks.count
+            ? chunks[currentChunk + 1].firstWord
+            : words.count
+        let span = Double(next - chunk.firstWord)
+        guard span > 0 else { return 0 }
+        return min(1, max(0, (position - Double(chunk.firstWord)) / span))
     }
 
     init() {
@@ -56,8 +77,14 @@ final class PrompterEngine: ObservableObject {
         rewind()
     }
 
-    /// Découpe en phrases, puis en tranches d'une douzaine de mots : une phrase
-    /// de quarante mots occuperait tout l'écran et ne dirait plus où l'on en est.
+    /// Longueur maximale d'une ligne, en caractères.
+    ///
+    /// Le découpage se fait sur la longueur et non sur un nombre de mots : la
+    /// vue calcule le défilement en supposant que chaque ligne en occupe
+    /// exactement une, et une ligne qui déborderait décalerait tout le reste.
+    /// Quarante-cinq caractères tiennent même à la plus grande taille de police.
+    private static let lineLength = 45
+
     private static func split(_ script: String) -> [Chunk] {
         var result: [Chunk] = []
         var wordCount = 0
@@ -69,13 +96,27 @@ final class PrompterEngine: ObservableObject {
             .filter { !$0.isEmpty }
 
         for sentence in sentences {
-            let parts = sentence.split(separator: " ").map(String.init)
-            for slice in stride(from: 0, to: parts.count, by: 12) {
-                let piece = parts[slice..<min(slice + 12, parts.count)]
+            var line: [String] = []
+            var length = 0
+
+            for word in sentence.split(separator: " ").map(String.init) {
+                if !line.isEmpty, length + word.count + 1 > lineLength {
+                    result.append(
+                        Chunk(id: result.count, text: line.joined(separator: " "), firstWord: wordCount)
+                    )
+                    wordCount += line.count
+                    line = []
+                    length = 0
+                }
+                line.append(word)
+                length += word.count + 1
+            }
+
+            if !line.isEmpty {
                 result.append(
-                    Chunk(id: result.count, text: piece.joined(separator: " "), firstWord: wordCount)
+                    Chunk(id: result.count, text: line.joined(separator: " "), firstWord: wordCount)
                 )
-                wordCount += piece.count
+                wordCount += line.count
             }
         }
         return result
@@ -92,13 +133,7 @@ final class PrompterEngine: ObservableObject {
     // MARK: - Position
 
     func rewind() {
-        cursor = 0
-        currentChunk = 0
-    }
-
-    private func syncChunk() {
-        guard let index = chunks.lastIndex(where: { $0.firstWord <= cursor }) else { return }
-        currentChunk = index
+        position = 0
     }
 
     // MARK: - Suivi de la voix
@@ -131,8 +166,7 @@ final class PrompterEngine: ObservableObject {
                 index += 1
             }
             if let found {
-                cursor = found + length
-                syncChunk()
+                position = Double(found + length)
                 return
             }
         }
@@ -149,8 +183,10 @@ final class PrompterEngine: ObservableObject {
         isFollowingVoice = false
         isAutoScrolling = true
 
-        let interval = 60.0 / max(preferences.prompterSpeed, 30)
-        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        // Un battement toutes les cent millisecondes, et la vue interpole entre
+        // deux : dix rafraîchissements par seconde suffisent à un mouvement
+        // continu, là où soixante feraient tourner l'interface pour rien.
+        let timer = Timer.scheduledTimer(withTimeInterval: Self.tick, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.step() }
         }
         RunLoop.main.add(timer, forMode: .common)
@@ -163,12 +199,13 @@ final class PrompterEngine: ObservableObject {
         isAutoScrolling = false
     }
 
+    static let tick: TimeInterval = 0.1
+
     private func step() {
-        guard cursor < words.count else {
+        guard position < Double(words.count) else {
             stopAutoScroll()
             return
         }
-        cursor += 1
-        syncChunk()
+        position += preferences.prompterSpeed / 60 * Self.tick
     }
 }
