@@ -226,7 +226,7 @@ final class NotchController {
         switch phase {
         case .closed: size = state.metrics.closedSize(withSlots: state.sideContent)
         case .peek: size = state.metrics.peekSize(withSlots: state.sideContent)
-        case .open: size = state.metrics.openSize
+        case .open: size = state.metrics.openSize(for: state.panel)
         }
         return CGRect(
             x: geometry.notchRect.midX - size.width / 2,

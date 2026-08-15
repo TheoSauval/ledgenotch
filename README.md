@@ -191,11 +191,21 @@ Une bande d'en-tête longe le boîtier caméra et porte les onglets à gauche,
 l'engrenage à droite. Rien au centre : c'est là que se trouve le boîtier, et
 tout ce qu'on y placerait serait invisible. Le contenu commence en dessous.
 
-La rangée d'onglets dispose donc d'environ **250 points**, du bord gauche au
-boîtier. Seul l'onglet actif porte son nom ; les autres se réduisent à leur
-icône. Avec quatre libellés complets, les derniers onglets passaient derrière
-le boîtier et devenaient inatteignables — tout en restant parfaitement visibles
-sur une capture d'écran, qui lit la mémoire vidéo.
+Les onglets se réduisent à leur icône, l'actif étant marqué par une pastille
+pleine. Ce n'est pas un choix esthétique : la rangée doit tenir entre le bord
+gauche et le boîtier, et des libellés complets faisaient passer les derniers
+onglets dessous — invisibles sur la dalle, mais parfaitement présents sur une
+capture d'écran, qui lit la mémoire vidéo.
+
+**L'encoche ouverte s'ajuste à la page.** Chaque page déclare la largeur dont
+elle a besoin : 720 points pour le tableau de bord, 540 pour la concentration.
+Garder la largeur du tableau de bord pour un minuteur laisserait de larges pans
+noirs de chaque côté.
+
+Ces deux points sont liés : rétrécir l'encoche rapproche le boîtier du bord et
+réduit d'autant la place des onglets. La rangée fixe donc une largeur minimale
+d'environ 540 points, en dessous de laquelle les derniers onglets repasseraient
+dans la zone aveugle.
 
 Deux règles s'y appliquent :
 

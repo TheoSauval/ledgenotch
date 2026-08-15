@@ -44,6 +44,7 @@ struct NotchView: View {
         .animation(.easeInOut(duration: 0.25), value: monitor.overall)
         .animation(.easeInOut(duration: 0.25), value: music.isPlaying)
         .animation(.easeInOut(duration: 0.25), value: deepWork.state)
+        .animation(.spring(response: 0.3, dampingFraction: 0.82), value: state.panel)
     }
 
     /// Les deux compartiments de l'encoche repliée, de part et d'autre du
@@ -265,15 +266,9 @@ private struct NotchTab<Icon: View>: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 icon()
-                if isSelected {
-                    Text(title)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .fixedSize()
-                }
             }
             .opacity(isSelected ? 1 : (isHovering ? 0.9 : 0.45))
-            .padding(.horizontal, isSelected ? 9 : 7)
+            .padding(.horizontal, 7)
             .padding(.vertical, 5)
             .background(
                 Capsule().fill(.white.opacity(isSelected ? 0.14 : (isHovering ? 0.07 : 0)))

@@ -13,12 +13,26 @@ final class NotchState: ObservableObject {
     }
 
     /// Ce que montre l'encoche une fois ouverte.
-    enum Panel {
+    enum Panel: CaseIterable {
         case home
         case weather
         case deepWork
         case translate
         case claude
+
+        /// Largeur souhaitée par la page.
+        ///
+        /// L'encoche s'ajuste au contenu : garder la largeur du tableau de bord
+        /// pour un minuteur laisserait de larges pans noirs de chaque côté.
+        var contentWidth: CGFloat {
+            switch self {
+            case .home: return 720
+            case .weather: return 720
+            case .translate: return 700
+            case .claude: return 620
+            case .deepWork: return 540
+            }
+        }
     }
 
     @Published var phase: Phase = .closed
@@ -34,7 +48,7 @@ final class NotchState: ObservableObject {
         switch phase {
         case .closed: return metrics.closedSize(withSlots: sideContent)
         case .peek: return metrics.peekSize(withSlots: sideContent)
-        case .open: return metrics.openSize
+        case .open: return metrics.openSize(for: panel)
         }
     }
 

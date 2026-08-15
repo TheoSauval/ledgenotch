@@ -7,8 +7,32 @@ import Foundation
 /// 120 fois par seconde produit des à-coups ; animer une forme dedans, non.
 struct NotchMetrics {
     let closedSize: CGSize
-    let openSize: CGSize
+    let openHeight: CGFloat
     let peekAmount: CGFloat
+
+    /// Place réservée à la rangée d'onglets, d'un côté du boîtier caméra.
+    ///
+    /// C'est elle qui fixe la largeur minimale de l'encoche ouverte : rétrécir
+    /// la fenêtre rapproche le boîtier du bord, et les derniers onglets
+    /// finiraient dessous — donc invisibles.
+    private let tabRowWidth: CGFloat = 176
+
+    var minimumOpenWidth: CGFloat { closedSize.width + tabRowWidth * 2 }
+
+    func openSize(for panel: NotchState.Panel) -> CGSize {
+        CGSize(
+            width: max(panel.contentWidth, minimumOpenWidth),
+            height: openHeight
+        )
+    }
+
+    /// La fenêtre ne change jamais de taille : elle est dimensionnée pour la
+    /// page la plus large, et c'est la forme dessinée dedans qui s'anime.
+    var widestOpenWidth: CGFloat {
+        NotchState.Panel.allCases
+            .map { openSize(for: $0).width }
+            .max() ?? minimumOpenWidth
+    }
 
     /// Marge ajoutée autour de la taille ouverte pour laisser respirer l'ombre
     /// et les coins rentrants, qui débordent de la forme.
@@ -20,14 +44,8 @@ struct NotchMetrics {
     init(closedSize: CGSize, peekAmount: Double = 30) {
         self.closedSize = closedSize
         self.peekAmount = peekAmount
-        // Trois colonnes — musique, miroir, calendrier — demandent de la largeur.
-        // En dessous de 720 points, la semaine du calendrier ne tient plus.
-        self.openSize = CGSize(
-            width: max(closedSize.width * 3.9, 720),
-            // 178 points de contenu, plus la bande d'en-tête qui longe le
-            // boîtier caméra.
-            height: 178 + closedSize.height
-        )
+        // 178 points de contenu, plus la bande d'en-tête qui longe le boîtier.
+        self.openHeight = 178 + closedSize.height
     }
 
     /// L'encoche au survol, qui conserve ses compartiments.
@@ -67,8 +85,8 @@ struct NotchMetrics {
 
     var panelSize: CGSize {
         CGSize(
-            width: openSize.width + padding * 2,
-            height: openSize.height + padding
+            width: widestOpenWidth + padding * 2,
+            height: openHeight + padding
         )
     }
 
