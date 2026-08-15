@@ -121,7 +121,7 @@ struct NotchView: View {
     /// Son centre n'est pas affiché — c'est le boîtier — d'où les onglets calés
     /// à gauche et l'engrenage à droite, sans rien entre les deux.
     private var header: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             NotchTab(
                 title: "Accueil",
                 isSelected: state.panel == .home,
@@ -130,7 +130,7 @@ struct NotchView: View {
                 state.panel = .home
             } icon: {
                 Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
@@ -142,7 +142,7 @@ struct NotchView: View {
                 state.panel = .weather
             } icon: {
                 Image(systemName: weather.report?.symbolName ?? "cloud.sun.fill")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
@@ -154,7 +154,7 @@ struct NotchView: View {
                 state.panel = .translate
             } icon: {
                 Image(systemName: "character.bubble.fill")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.white)
             }
 
@@ -165,7 +165,7 @@ struct NotchView: View {
             ) {
                 state.panel = .claude
             } icon: {
-                ClaudeCodeMark(width: 14)
+                ClaudeCodeMark(width: 15)
             }
 
             Spacer(minLength: 0)
@@ -219,8 +219,14 @@ struct NotchView: View {
     }
 }
 
-/// Onglet de l'en-tête : une pastille pleine quand il est actif, un simple
-/// libellé estompé sinon.
+/// Onglet de l'en-tête.
+///
+/// Seul l'onglet actif porte son nom ; les autres se réduisent à leur icône.
+/// Ce n'est pas un choix esthétique : la rangée doit tenir entre le bord gauche
+/// de l'encoche et le boîtier caméra, soit environ 250 points. Quatre libellés
+/// complets débordaient derrière le boîtier, et les derniers onglets devenaient
+/// littéralement invisibles — présents dans la mémoire vidéo, donc sur les
+/// captures d'écran, mais pas sur la dalle.
 private struct NotchTab<Icon: View>: View {
     let title: String
     let isSelected: Bool
@@ -234,12 +240,15 @@ private struct NotchTab<Icon: View>: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 icon()
-                Text(title)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
+                if isSelected {
+                    Text(title)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .fixedSize()
+                }
             }
-            .opacity(isSelected ? 1 : (isHovering ? 0.85 : 0.45))
-            .padding(.horizontal, 9)
+            .opacity(isSelected ? 1 : (isHovering ? 0.9 : 0.45))
+            .padding(.horizontal, isSelected ? 9 : 7)
             .padding(.vertical, 5)
             .background(
                 Capsule().fill(.white.opacity(isSelected ? 0.14 : (isHovering ? 0.07 : 0)))
@@ -256,8 +265,9 @@ private struct NotchTab<Icon: View>: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovering = $0 }
+        .help(title)
         .animation(.easeOut(duration: 0.15), value: isHovering)
-        .animation(.easeOut(duration: 0.18), value: isSelected)
+        .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isSelected)
     }
 }
 

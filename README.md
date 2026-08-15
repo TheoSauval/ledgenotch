@@ -188,6 +188,12 @@ Une bande d'en-tête longe le boîtier caméra et porte les onglets à gauche,
 l'engrenage à droite. Rien au centre : c'est là que se trouve le boîtier, et
 tout ce qu'on y placerait serait invisible. Le contenu commence en dessous.
 
+La rangée d'onglets dispose donc d'environ **250 points**, du bord gauche au
+boîtier. Seul l'onglet actif porte son nom ; les autres se réduisent à leur
+icône. Avec quatre libellés complets, les derniers onglets passaient derrière
+le boîtier et devenaient inatteignables — tout en restant parfaitement visibles
+sur une capture d'écran, qui lit la mémoire vidéo.
+
 Deux règles s'y appliquent :
 
 - **La caméra ne démarre que sur un clic.** L'allumer à l'ouverture ferait
