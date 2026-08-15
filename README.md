@@ -54,6 +54,8 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Translate/SpeechListener.swift` | La transcription du micro, en direct. |
 | `Translate/TranslatePanelView.swift` | La page traduction et ses deux colonnes. |
 | `Translate/TranslationLanguage.swift` | Les langues proposées. |
+| `DeepWork/DeepWorkTimer.swift` | Le minuteur de séance et le compte du jour. |
+| `DeepWork/DeepWorkPanelView.swift` | La page concentration et sa pastille. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -95,6 +97,7 @@ Edit Scheme → Run → Arguments :
 | `LEDGENOTCH_FORCE_OPEN=1` | Ouvre l'encoche dès le lancement, pour travailler son contenu sans avoir à survoler puis cliquer. |
 | `LEDGENOTCH_FORCE_PHASE=peek` | Fige l'encoche dans un état : `closed`, `peek` ou `open`. Le survol est le seul qu'on ne peut pas observer autrement — il disparaît dès qu'on éloigne le curseur pour regarder. |
 | `LEDGENOTCH_FORCE_PANEL=claude` | Choisit l'onglet affiché au lancement : `home`, `music` ou `claude`. |
+| `LEDGENOTCH_DEEPWORK=1` | Démarre une séance au lancement, pour observer le décompte sur l'encoche repliée sans attendre. |
 | `LEDGENOTCH_OPEN_SETTINGS=1` | Ouvre la fenêtre de réglages au lancement. |
 | `LEDGENOTCH_WINDOW_LEVEL=101` | Force le niveau du panneau, pour comparer ce qui passe devant ou derrière. |
 
@@ -246,6 +249,21 @@ Deux détails qui n'allaient pas de soi :
 ne se déclare pas sous condition de version : la colonne traduite vit donc dans
 sa propre vue annotée, ce qui garde le reste compatible avec macOS 14.
 
+## Concentration
+
+Une séance minutée — quinze, vingt-cinq, cinquante ou quatre-vingt-dix minutes —
+dont le décompte s'affiche sur l'encoche **repliée**. C'est là tout l'intérêt :
+surveiller le temps qui reste sans ouvrir quoi que ce soit.
+
+Le compartiment gauche de l'encoche repliée suit un ordre de priorité : une
+séance en cours passe devant la pochette, car elle est bornée dans le temps et
+c'est son décompte qu'on veut suivre. La pastille de Claude, elle, ne disparaît
+jamais : elle se pose en écusson, puisqu'elle réclame une action.
+
+Le temps restant se recalcule depuis une échéance plutôt que de se décrémenter :
+un Mac mis en veille arrêterait un minuteur classique, et la séance reprendrait
+au réveil comme si de rien n'était.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
@@ -254,6 +272,7 @@ sa propre vue annotée, ce qui garde le reste compatible avec macOS 14.
 - [x] Tableau de bord : musique, miroir, calendrier
 - [x] Page météo : relevé courant et prochaines heures
 - [x] Page traduction : transcription du micro et traduction locale
+- [x] Page concentration : séances minutées, décompte sur l'encoche repliée
 - [ ] Étagère à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via

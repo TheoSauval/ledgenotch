@@ -8,6 +8,7 @@ struct NotchView: View {
     @ObservedObject var mirror: MirrorSession
     @ObservedObject var weather: WeatherService
     @ObservedObject var listener: SpeechListener
+    @ObservedObject var deepWork: DeepWorkTimer
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -42,6 +43,7 @@ struct NotchView: View {
         .animation(animation, value: state.phase)
         .animation(.easeInOut(duration: 0.25), value: monitor.overall)
         .animation(.easeInOut(duration: 0.25), value: music.isPlaying)
+        .animation(.easeInOut(duration: 0.25), value: deepWork.state)
     }
 
     /// Les deux compartiments de l'encoche repliée, de part et d'autre du
@@ -62,13 +64,22 @@ struct NotchView: View {
         }
     }
 
-    /// La pochette prend la place quand il y a de la musique ; sinon la pastille
-    /// de Claude s'y installe. Quand les deux coexistent, Claude passe en écusson
-    /// sur le coin de la pochette : une session bloquée demande une action, et
-    /// ne doit jamais disparaître derrière un morceau qui tourne.
+    /// Le compartiment gauche, par ordre de priorité.
+    ///
+    /// Une séance de concentration passe devant tout : elle est bornée dans le
+    /// temps et c'est précisément son décompte qu'on veut surveiller. Vient
+    /// ensuite la pochette. Quand une session Claude réclame l'attention, sa
+    /// pastille se pose en écusson plutôt que de disparaître — elle demande une
+    /// action, là qu'un morceau qui tourne n'attend rien de personne.
     @ViewBuilder
     private var artworkSlot: some View {
-        if let artwork = music.artwork {
+        if deepWork.isActive {
+            DeepWorkBadge(
+                progress: deepWork.progress,
+                minutes: Int(deepWork.remaining.rounded(.up)) / 60,
+                isPaused: deepWork.state == .paused
+            )
+        } else if let artwork = music.artwork {
             Image(nsImage: artwork)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
@@ -105,6 +116,8 @@ struct NotchView: View {
                     HomeDashboardView(music: music, calendar: calendar, mirror: mirror)
                 case .weather:
                     WeatherPanelView(weather: weather)
+                case .deepWork:
+                    DeepWorkPanelView(timer: deepWork)
                 case .translate:
                     TranslatePanelView(listener: listener)
                 case .claude:
@@ -142,6 +155,18 @@ struct NotchView: View {
                 state.panel = .weather
             } icon: {
                 Image(systemName: weather.report?.symbolName ?? "cloud.sun.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
+            NotchTab(
+                title: "Concentration",
+                isSelected: state.panel == .deepWork,
+                badge: deepWork.state == .running ? .accentColor : nil
+            ) {
+                state.panel = .deepWork
+            } icon: {
+                Image(systemName: "timer")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white)
             }

@@ -30,6 +30,7 @@ enum DebugOptions {
         case "claude": return .claude
         case "weather": return .weather
         case "translate": return .translate
+        case "deepwork": return .deepWork
         case "home": return .home
         default: return nil
         }
@@ -39,6 +40,12 @@ enum DebugOptions {
     /// lancement, pour éprouver la traduction sans parler dans le micro.
     static var sampleSpeech: String? {
         ProcessInfo.processInfo.environment["LEDGENOTCH_SAMPLE_SPEECH"]
+    }
+
+    /// `LEDGENOTCH_DEEPWORK=1` démarre une séance au lancement, pour observer
+    /// le décompte sur l'encoche repliée sans attendre.
+    static var startDeepWork: Bool {
+        ProcessInfo.processInfo.environment["LEDGENOTCH_DEEPWORK"] == "1"
     }
 
     /// `LEDGENOTCH_OPEN_SETTINGS=1` ouvre la fenêtre de réglages au lancement,

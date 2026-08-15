@@ -19,6 +19,7 @@ final class NotchController {
     private let mirror = MirrorSession()
     private let weather = WeatherService()
     private let listener = SpeechListener()
+    private let deepWork = DeepWorkTimer()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -40,6 +41,7 @@ final class NotchController {
         music.start()
         weather.start()
         observeSideContent()
+        observeDeepWork()
 
         NotificationCenter.default.addObserver(
             self,
@@ -47,6 +49,10 @@ final class NotchController {
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
+
+        if DebugOptions.startDeepWork {
+            deepWork.start()
+        }
 
         if let phrase = DebugOptions.sampleSpeech {
             listener.preload(phrase)
@@ -113,7 +119,8 @@ final class NotchController {
             calendar: calendar,
             mirror: mirror,
             weather: weather,
-            listener: listener
+            listener: listener,
+            deepWork: deepWork
         ) { [weak self] in
             self?.openSettings()
         }
@@ -155,9 +162,11 @@ final class NotchController {
     /// à montrer. Le reste du temps elle épouse le boîtier caméra et se fait
     /// oublier, ce qui est tout l'intérêt du procédé.
     private func observeSideContent() {
-        Publishers.CombineLatest(music.$track, claude.$sessions)
-            .map { track, sessions in
-                track != nil || sessions.contains { $0.activity != .idle }
+        Publishers.CombineLatest3(music.$track, claude.$sessions, deepWork.$state)
+            .map { track, sessions, work in
+                track != nil
+                    || work != .idle
+                    || sessions.contains { $0.activity != .idle }
             }
             .removeDuplicates()
             .sink { [weak self] hasContent in
@@ -165,6 +174,22 @@ final class NotchController {
                     guard let self else { return }
                     self.state.sideContent = hasContent
                     self.updateMousePassthrough(at: self.tracker.location)
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Une séance terminée mérite qu'on lève les yeux : l'encoche dépasse et
+    /// le trackpad le confirme, sans quoi on continuerait sans s'en apercevoir.
+    private func observeDeepWork() {
+        deepWork.finished
+            .sink { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard self.state.phase == .closed else { return }
+                    self.setPhase(.peek)
+                    Haptics.open()
+                    self.scheduleClose(after: 3)
                 }
             }
             .store(in: &cancellables)
