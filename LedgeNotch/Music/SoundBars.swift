@@ -51,9 +51,19 @@ struct SoundBars: View {
 /// ferait perdre l'effet vivant qu'on cherchait.
 struct EqualizerButton: View {
     let isPlaying: Bool
+    /// Pochette posée derrière les barres, quand le compartiment de gauche est
+    /// déjà pris par autre chose. Les deux tiennent alors dans un seul carré.
+    var artwork: NSImage?
     let action: () -> Void
 
     @State private var isHovering = false
+
+    /// Sur fond noir, des barres écrasées au ras du sol disent clairement que
+    /// rien ne joue. Posées sur une pochette, elles s'y perdent : l'icône prend
+    /// alors le relais.
+    private var showsIcon: Bool {
+        isHovering || (artwork != nil && !isPlaying)
+    }
 
     var body: some View {
         Button(action: action) {
@@ -62,13 +72,29 @@ struct EqualizerButton: View {
                 // toute la surface du compartiment est cliquable.
                 Color.white.opacity(0.001)
 
-                SoundBars(height: 13, isActive: isPlaying)
-                    .opacity(isHovering ? 0 : (isPlaying ? 1 : 0.4))
+                if let artwork {
+                    Image(nsImage: artwork)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 24, height: 24)
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        // Sans ce voile, des barres blanches sur une pochette
+                        // claire deviennent illisibles.
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(.black.opacity(0.5))
+                        )
+                }
+
+                SoundBars(height: artwork == nil ? 13 : 11, isActive: isPlaying)
+                    .opacity(showsIcon ? 0 : (isPlaying ? 1 : 0.4))
+                    .shadow(color: .black.opacity(artwork == nil ? 0 : 0.9), radius: 2)
 
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.white.opacity(0.9))
-                    .opacity(isHovering ? 1 : 0)
+                    .shadow(color: .black.opacity(artwork == nil ? 0 : 0.9), radius: 2)
+                    .opacity(showsIcon ? 1 : 0)
             }
             .contentShape(Rectangle())
         }

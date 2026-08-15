@@ -58,10 +58,17 @@ struct NotchView: View {
         }
     }
 
+    /// Quand le compartiment de gauche est occupé par une séance, la pochette
+    /// vient se glisser derrière l'égaliseur plutôt que de disparaître : les
+    /// deux informations tiennent alors dans un seul carré.
     @ViewBuilder
     private var equalizerSlot: some View {
         if music.track != nil {
-            EqualizerButton(isPlaying: music.isPlaying, action: music.playPause)
+            EqualizerButton(
+                isPlaying: music.isPlaying,
+                artwork: deepWork.isActive ? music.artwork : nil,
+                action: music.playPause
+            )
         }
     }
 

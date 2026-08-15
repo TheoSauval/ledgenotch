@@ -267,8 +267,9 @@ surveiller le temps qui reste sans ouvrir quoi que ce soit.
 
 Le compartiment gauche de l'encoche repliée suit un ordre de priorité : une
 séance en cours passe devant la pochette, car elle est bornée dans le temps et
-c'est son décompte qu'on veut suivre. La pastille de Claude, elle, ne disparaît
-jamais : elle se pose en écusson, puisqu'elle réclame une action.
+c'est son décompte qu'on veut suivre. Rien ne disparaît pour autant — la
+pochette se glisse derrière l'égaliseur à droite, et la pastille de Claude se
+pose en écusson, puisqu'elle réclame une action.
 
 Le temps restant se recalcule depuis une échéance plutôt que de se décrémenter :
 un Mac mis en veille arrêterait un minuteur classique, et la séance reprendrait
