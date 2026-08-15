@@ -56,6 +56,8 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Translate/TranslationLanguage.swift` | Les langues proposées. |
 | `DeepWork/DeepWorkTimer.swift` | Le minuteur de séance et le compte du jour. |
 | `DeepWork/DeepWorkPanelView.swift` | La page concentration et sa pastille. |
+| `Prompter/PrompterEngine.swift` | Le découpage du texte et le recalage sur la voix. |
+| `Prompter/PrompterPanelView.swift` | La page prompteur. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -275,6 +277,26 @@ Le temps restant se recalcule depuis une échéance plutôt que de se décrémen
 un Mac mis en veille arrêterait un minuteur classique, et la séance reprendrait
 au réveil comme si de rien n'était.
 
+## Prompteur
+
+Le texte se colle dans les réglages et défile dans l'encoche, la ligne en cours
+détachée des autres. Deux façons d'avancer : au son de la voix, ou à vitesse
+constante quand le micro n'est pas une option.
+
+Le suivi vocal compare en continu ce qui est dit à ce qui est écrit. À chaque
+bribe transcrite, on cherche les derniers mots entendus **devant** le curseur,
+du plus long enchaînement au plus court : trois mots consécutifs ne se répètent
+pratiquement jamais, là où un mot seul se retrouve partout. La recherche est
+bornée à quarante-cinq mots d'avance, sans quoi un « le » ferait sauter à
+l'autre bout du texte.
+
+Les mots sont comparés sans accents, sans ponctuation et sans casse : la
+reconnaissance vocale écrit « ça » là où le texte dit « Ca », et « c'est » là
+où il dit « c'est, ».
+
+Son onglet est le seul à droite du boîtier caméra. La rangée de gauche arrivait
+à saturation, et cet espace-là était inutilisé.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
@@ -284,6 +306,7 @@ au réveil comme si de rien n'était.
 - [x] Page météo : relevé courant et prochaines heures
 - [x] Page traduction : transcription du micro et traduction locale
 - [x] Page concentration : séances minutées, décompte sur l'encoche repliée
+- [x] Prompteur : texte défilant, au rythme de la voix ou à vitesse fixe
 - [ ] Étagère à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via

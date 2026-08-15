@@ -71,6 +71,32 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Prompteur") {
+                TextEditor(text: $preferences.prompterScript)
+                    .font(.system(size: 12))
+                    .frame(height: 90)
+                    .scrollContentBackground(.hidden)
+                    .background(Color(nsColor: .textBackgroundColor).opacity(0.5))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Slider(
+                        value: $preferences.prompterSpeed,
+                        in: Preferences.prompterSpeedRange,
+                        step: 10
+                    ) {
+                        Text("Vitesse de défilement")
+                    } minimumValueLabel: {
+                        Text("80")
+                    } maximumValueLabel: {
+                        Text("220")
+                    }
+                    Text("\(Int(preferences.prompterSpeed)) mots par minute, quand le prompteur n'écoute pas la voix.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Claude Code") {
                 HStack {
                     Image(systemName: hooksInstalled

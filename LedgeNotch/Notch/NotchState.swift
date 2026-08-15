@@ -19,6 +19,7 @@ final class NotchState: ObservableObject {
         case deepWork
         case translate
         case claude
+        case prompter
 
         /// Largeur souhaitée par la page.
         ///
@@ -31,6 +32,7 @@ final class NotchState: ObservableObject {
             case .translate: return 700
             case .claude: return 620
             case .deepWork: return 540
+            case .prompter: return 700
             }
         }
     }

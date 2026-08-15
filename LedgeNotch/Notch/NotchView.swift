@@ -9,6 +9,7 @@ struct NotchView: View {
     @ObservedObject var weather: WeatherService
     @ObservedObject var listener: SpeechListener
     @ObservedObject var deepWork: DeepWorkTimer
+    @ObservedObject var prompter: PrompterEngine
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -130,6 +131,8 @@ struct NotchView: View {
                     TranslatePanelView(listener: listener)
                 case .claude:
                     ClaudePanelView(monitor: monitor)
+                case .prompter:
+                    PrompterPanelView(engine: prompter, listener: listener)
                 }
                 Spacer(minLength: 0)
             }
@@ -202,6 +205,20 @@ struct NotchView: View {
             }
 
             Spacer(minLength: 0)
+
+            // À droite du boîtier plutôt qu'à gauche : la rangée de gauche
+            // arrive à saturation, et cet espace-là était inutilisé.
+            NotchTab(
+                title: "Prompteur",
+                isSelected: state.panel == .prompter,
+                badge: prompter.isFollowingVoice ? .red : nil
+            ) {
+                state.panel = .prompter
+            } icon: {
+                Image(systemName: "text.alignleft")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
 
             NotchIconButton(
                 isSelected: false,

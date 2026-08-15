@@ -20,6 +20,7 @@ final class NotchController {
     private let weather = WeatherService()
     private let listener = SpeechListener()
     private let deepWork = DeepWorkTimer()
+    private let prompter = PrompterEngine()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -42,6 +43,7 @@ final class NotchController {
         weather.start()
         observeSideContent()
         observeDeepWork()
+        observePrompter()
 
         NotificationCenter.default.addObserver(
             self,
@@ -83,6 +85,7 @@ final class NotchController {
         music.stop()
         weather.stop()
         listener.stop()
+        prompter.stopAutoScroll()
         pendingClose?.cancel()
         cancellables.removeAll()
         NotificationCenter.default.removeObserver(self)
@@ -120,7 +123,8 @@ final class NotchController {
             mirror: mirror,
             weather: weather,
             listener: listener,
-            deepWork: deepWork
+            deepWork: deepWork,
+            prompter: prompter
         ) { [weak self] in
             self?.openSettings()
         }
@@ -191,6 +195,16 @@ final class NotchController {
                     Haptics.open()
                     self.scheduleClose(after: 3)
                 }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Le prompteur se recale sur chaque bribe transcrite : c'est ce qui lui
+    /// permet de suivre le rythme du lecteur plutôt que d'imposer le sien.
+    private func observePrompter() {
+        listener.$transcript
+            .sink { [weak self] text in
+                MainActor.assumeIsolated { self?.prompter.hear(text) }
             }
             .store(in: &cancellables)
     }

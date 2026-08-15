@@ -19,6 +19,9 @@ final class Preferences: ObservableObject {
         static let weatherCity = "weatherCity"
         static let speechSource = "speechSource"
         static let speechTarget = "speechTarget"
+        static let prompterScript = "prompterScript"
+        static let prompterFontSize = "prompterFontSize"
+        static let prompterSpeed = "prompterSpeed"
     }
 
     /// Ouvrir l'encoche au simple survol, sans attendre le clic.
@@ -61,7 +64,22 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(speechTarget.rawValue, forKey: Key.speechTarget) }
     }
 
+    /// Le texte du prompteur, sa taille et sa vitesse de défilement en mots
+    /// par minute quand il n'écoute pas la voix.
+    @Published var prompterScript: String {
+        didSet { defaults.set(prompterScript, forKey: Key.prompterScript) }
+    }
+
+    @Published var prompterFontSize: Double {
+        didSet { defaults.set(prompterFontSize, forKey: Key.prompterFontSize) }
+    }
+
+    @Published var prompterSpeed: Double {
+        didSet { defaults.set(prompterSpeed, forKey: Key.prompterSpeed) }
+    }
+
     static let peekRange: ClosedRange<Double> = 0...80
+    static let prompterSpeedRange: ClosedRange<Double> = 80...220
 
     private let defaults: UserDefaults
 
@@ -72,6 +90,8 @@ final class Preferences: ObservableObject {
             Key.hapticsEnabled: true,
             Key.peekAmount: 30.0,
             Key.alertOnClaudeEvents: true,
+            Key.prompterFontSize: 17.0,
+            Key.prompterSpeed: 140.0,
         ])
         openOnHover = defaults.bool(forKey: Key.openOnHover)
         hapticsEnabled = defaults.bool(forKey: Key.hapticsEnabled)
@@ -83,6 +103,9 @@ final class Preferences: ObservableObject {
             .flatMap(TranslationLanguage.init(rawValue:)) ?? .french
         speechTarget = defaults.string(forKey: Key.speechTarget)
             .flatMap(TranslationLanguage.init(rawValue:)) ?? .english
+        prompterScript = defaults.string(forKey: Key.prompterScript) ?? ""
+        prompterFontSize = defaults.double(forKey: Key.prompterFontSize)
+        prompterSpeed = defaults.double(forKey: Key.prompterSpeed)
     }
 
     func resetToDefaults() {
@@ -94,5 +117,7 @@ final class Preferences: ObservableObject {
         weatherCity = ""
         speechSource = .french
         speechTarget = .english
+        prompterFontSize = 17
+        prompterSpeed = 140
     }
 }

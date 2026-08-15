@@ -31,6 +31,7 @@ enum DebugOptions {
         case "weather": return .weather
         case "translate": return .translate
         case "deepwork": return .deepWork
+        case "prompter": return .prompter
         case "home": return .home
         default: return nil
         }
