@@ -32,6 +32,7 @@ enum DebugOptions {
         case "translate": return .translate
         case "deepwork": return .deepWork
         case "prompter": return .prompter
+        case "shelf": return .shelf
         case "home": return .home
         default: return nil
         }

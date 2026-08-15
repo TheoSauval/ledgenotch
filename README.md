@@ -59,6 +59,8 @@ icône dans la barre de menus, qui donne accès aux réglages et à « Quitter �
 | `Prompter/PrompterEngine.swift` | Le découpage du texte et le recalage sur la voix. |
 | `Prompter/PrompterPanelView.swift` | La page prompteur. |
 | `Prompter/ScriptImporter.swift` | Lecture de Word, PDF, RTF et consorts. |
+| `Shelf/ShelfStore.swift` | Le bac : copie, listage et retrait des fichiers. |
+| `Shelf/ShelfPanelView.swift` | La page bac et sa zone de dépôt. |
 
 Trois pièges rencontrés, et leur solution, pour mémoire :
 
@@ -308,6 +310,21 @@ tierce n'est nécessaire pour ouvrir un `.docx`.
 Son onglet est le seul à droite du boîtier caméra. La rangée de gauche arrivait
 à saturation, et cet espace-là était inutilisé.
 
+## Bac
+
+Les fichiers déposés sont **copiés** dans `~/Library/Application Support/LedgeNotch/Bac`,
+pas simplement référencés. Une référence se briserait dès que l'original serait
+déplacé ou vidé de la corbeille, et le bac se viderait tout seul — l'inverse de
+ce qu'on attend d'un endroit où l'on pose des choses.
+
+L'état du bac se lit dans le dossier lui-même, sans index à côté : deux sources
+de vérité finiraient par diverger, et le dossier ne ment jamais. « Vider » passe
+par la corbeille plutôt que par une suppression définitive.
+
+Traîner un fichier jusqu'à l'encoche l'ouvre sans qu'on ait à cliquer — le
+bouton de la souris est déjà enfoncé, un clic de plus est impossible. Le suivi
+du curseur distingue donc un simple déplacement d'un glisser en cours.
+
 ## Feuille de route
 
 - [x] Le socle : panneau, géométrie, survol, animation
@@ -318,7 +335,7 @@ Son onglet est le seul à droite du boîtier caméra. La rangée de gauche arriv
 - [x] Page traduction : transcription du micro et traduction locale
 - [x] Page concentration : séances minutées, décompte sur l'encoche repliée
 - [x] Prompteur : texte défilant, au rythme de la voix ou à vitesse fixe
-- [ ] Étagère à fichiers (glisser-déposer)
+- [x] Bac à fichiers (glisser-déposer)
 - [x] Lecteur média — Apple Music, Spotify et YouTube, au choix
 - [ ] Étendre le lecteur aux autres sources via
       [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter)

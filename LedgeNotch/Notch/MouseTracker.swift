@@ -11,33 +11,39 @@ import AppKit
 /// contrairement au clavier.
 final class MouseTracker {
     private var monitors: [Any] = []
-    private var onMove: ((CGPoint) -> Void)?
+    private var onMove: ((CGPoint, Bool) -> Void)?
     private var onClick: ((CGPoint) -> Void)?
 
     /// Position courante du curseur, en coordonnées écran AppKit.
     var location: CGPoint { NSEvent.mouseLocation }
 
+    /// - Parameter onMove: reçoit la position et un drapeau indiquant qu'un
+    ///   bouton est enfoncé — autrement dit qu'un glisser est en cours, ce qui
+    ///   permet à l'encoche de s'ouvrir pour accueillir un fichier.
     func start(
-        onMove: @escaping (CGPoint) -> Void,
+        onMove: @escaping (CGPoint, Bool) -> Void,
         onClick: @escaping (CGPoint) -> Void
     ) {
         stop()
         self.onMove = onMove
         self.onClick = onClick
 
-        let moves: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .rightMouseDragged]
+        let hover: NSEvent.EventTypeMask = [.mouseMoved]
+        let drags: NSEvent.EventTypeMask = [.leftMouseDragged, .rightMouseDragged]
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown]
 
-        add(global: moves) { [weak self] in self?.onMove?(NSEvent.mouseLocation) }
+        add(global: hover) { [weak self] in self?.onMove?(NSEvent.mouseLocation, false) }
+        add(global: drags) { [weak self] in self?.onMove?(NSEvent.mouseLocation, true) }
         add(global: clicks) { [weak self] in self?.onClick?(NSEvent.mouseLocation) }
 
         // Le moniteur global ne voit pas les événements destinés à notre propre
         // panneau. Sans ce doublon local, l'encoche ouverte cesserait de répondre
         // dès que le curseur entre dedans.
-        add(local: moves) { [weak self] in self?.onMove?(NSEvent.mouseLocation) }
+        add(local: hover) { [weak self] in self?.onMove?(NSEvent.mouseLocation, false) }
+        add(local: drags) { [weak self] in self?.onMove?(NSEvent.mouseLocation, true) }
         add(local: clicks) { [weak self] in self?.onClick?(NSEvent.mouseLocation) }
 
-        onMove(NSEvent.mouseLocation)
+        onMove(NSEvent.mouseLocation, false)
     }
 
     func stop() {

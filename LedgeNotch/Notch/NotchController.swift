@@ -21,6 +21,7 @@ final class NotchController {
     private let listener = SpeechListener()
     private let deepWork = DeepWorkTimer()
     private let prompter = PrompterEngine()
+    private let shelf = ShelfStore()
     private var panel: NotchPanel?
     private var geometry: NotchGeometry?
     private var pendingClose: DispatchWorkItem?
@@ -74,8 +75,8 @@ final class NotchController {
         }
 
         tracker.start(
-            onMove: { [weak self] point in
-                MainActor.assumeIsolated { self?.handleMouse(at: point) }
+            onMove: { [weak self] point, dragging in
+                MainActor.assumeIsolated { self?.handleMouse(at: point, dragging: dragging) }
             },
             onClick: { [weak self] point in
                 MainActor.assumeIsolated { self?.handleClick(at: point) }
@@ -128,7 +129,8 @@ final class NotchController {
             weather: weather,
             listener: listener,
             deepWork: deepWork,
-            prompter: prompter
+            prompter: prompter,
+            shelf: shelf
         ) { [weak self] in
             self?.openSettings()
         }
@@ -284,8 +286,17 @@ final class NotchController {
 
     // MARK: - Survol et clic
 
-    private func handleMouse(at point: CGPoint) {
+    private func handleMouse(at point: CGPoint, dragging: Bool = false) {
         guard geometry != nil else { return }
+
+        // Un fichier traîné jusqu'à l'encoche l'ouvre sans qu'on ait à cliquer :
+        // le bouton est déjà enfoncé, un clic de plus est impossible.
+        if dragging, !state.isOpen, activeRect().contains(point) {
+            setPhase(.open)
+            state.panel = .shelf
+            updateMousePassthrough(at: point)
+            return
+        }
 
         if activeRect().contains(point) {
             pendingClose?.cancel()

@@ -10,6 +10,7 @@ struct NotchView: View {
     @ObservedObject var listener: SpeechListener
     @ObservedObject var deepWork: DeepWorkTimer
     @ObservedObject var prompter: PrompterEngine
+    @ObservedObject var shelf: ShelfStore
     let onOpenSettings: () -> Void
 
     private var size: CGSize { state.currentSize }
@@ -131,6 +132,8 @@ struct NotchView: View {
                     TranslatePanelView(listener: listener)
                 case .claude:
                     ClaudePanelView(monitor: monitor)
+                case .shelf:
+                    ShelfPanelView(shelf: shelf)
                 case .prompter:
                     PrompterPanelView(engine: prompter, listener: listener)
                 }
@@ -208,6 +211,18 @@ struct NotchView: View {
 
             // À droite du boîtier plutôt qu'à gauche : la rangée de gauche
             // arrive à saturation, et cet espace-là était inutilisé.
+            NotchTab(
+                title: "Bac",
+                isSelected: state.panel == .shelf,
+                badge: shelf.items.isEmpty ? nil : .white.opacity(0.6)
+            ) {
+                state.panel = .shelf
+            } icon: {
+                Image(systemName: shelf.items.isEmpty ? "tray" : "tray.full.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+
             NotchTab(
                 title: "Prompteur",
                 isSelected: state.panel == .prompter,
